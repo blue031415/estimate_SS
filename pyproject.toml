@@ -1,0 +1,31 @@
+[project]
+name = "estimate-ss"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "black>=26.5.1",
+    "flake8>=7.3.0",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+skip-string-normalization = false
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | env
+  | build
+  | dist
+  | __pycache__
+  | migrations
+)/
+'''
