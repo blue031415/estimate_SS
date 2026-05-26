@@ -4,7 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "ezc3d>=1.7.0",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.6",
+    "scipy>=1.17.1",
+]
 
 [dependency-groups]
 dev = [
@@ -13,7 +18,7 @@ dev = [
 ]
 
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ["py312"]
 skip-string-normalization = false
 include = '\.pyi?$'
