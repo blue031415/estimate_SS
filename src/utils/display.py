@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 # from scipy.linalg import eig
-from util.preprocess import remove_nan
+from utils.preprocess import remove_nan
 
 
 def display_motion(path):
@@ -223,3 +223,14 @@ def display_motion_some_score(path, x, y, y_label, save_path):
     plt.legend()
     # plt.show()
     ani.save(save_path, writer="pillow", fps=20)
+
+
+def display_point(path, frame):
+    c = c3d(path)
+    point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
+    data = point_data[0:3, :, frame]
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+    ax.scatter(data[0, :], data[1, :], data[2, :], s=5)
+    ax.set_box_aspect([1, 1, 2])
+    plt.show()
