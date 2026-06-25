@@ -20,7 +20,6 @@ def select_eigen_indices(eigen_val, threshold=0.95):
 
 def main():
     data = read_c3d(path)
-    # print(data.shape)
     shape_subspace_list = []
     print(f"frame num: {data.shape[2]}")
     P = np.zeros((data.shape[0], data.shape[0]))
@@ -49,6 +48,7 @@ def main():
     ]
 
     D = [gen_shape_difference_subspace(p_list[i], p_list[i + t]) for i in range(len(p_list) - t)]
+    print(len(D))
 
 
 if __name__ == "__main__":
