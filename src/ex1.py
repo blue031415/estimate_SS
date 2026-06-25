@@ -24,7 +24,7 @@ def plot_eigen_val_log(eigen_val):
     plt.show()
 
 
-def plot_eigen_val(eigen_val):
+def plot_eigen_val(eigen_val, path=None):
     plt.figure()
     plt.plot(np.arange(1, len(eigen_val) + 1), eigen_val, marker="o")
     x = np.arange(1, len(eigen_val) + 1)
@@ -33,7 +33,10 @@ def plot_eigen_val(eigen_val):
     plt.ylabel("eigenvalue")
     plt.title("Eigenvalues of averaged projection matrix")
     plt.grid(True)
-    plt.show()
+    if path:
+        plt.savefig(path)
+    else:
+        plt.show()
 
 
 def select_eigen_indices(eigen_val, threshold=0.95):
@@ -58,11 +61,11 @@ def main():
     eigen_val, eigen_vec = eigh(P)
     eigen_val, eigen_vec = eigen_val[::-1], eigen_vec[:, ::-1]
 
-    indices, _, cumulative_ratio = select_eigen_indices(eigen_val, threshold=0.99)
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_val, threshold=0.999)
 
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
-    # plot_eigen_val(eigen_val[indices])
+    plot_eigen_val(eigen_val[indices], "out\\ex1\\eigen_val.png")
 
     # 以下部分空間の次元は５とする。これは固有値の寄与率が0.99を超える最小の次元である。
 
