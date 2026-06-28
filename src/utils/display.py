@@ -159,7 +159,6 @@ def display_motion_score_contribution(path, x, y, contribution, save_path):
 
 # 複数の波形を表示する
 def display_motion_some_score(path, x, y, y_label, save_path):
-    # cfg = Config()
 
     # yはarray
     # y[0] 値1
@@ -199,7 +198,11 @@ def display_motion_some_score(path, x, y, y_label, save_path):
 
     line = []
     for i in range(len(y)):
-        line.append(ax2.plot([], [], label=y_label[i]))
+        # line.append(ax2.plot([], [], label=y_label[i]))
+        if i == 0:
+            line.append(ax2.plot([], [], label=y_label[i]))
+        else:
+            line.append(ax2.plot([], [], label=y_label[i], linestyle=":"))
 
     ax2.set_xlim(np.min(x), np.max(x))
     ax2.set_ylim(np.min(y), np.max(y))
