@@ -12,6 +12,17 @@ from matplotlib.animation import FuncAnimation
 from utils.preprocess import remove_nan
 
 
+def contribution_to_size(cb, vmin, vmax, min_size=5, max_size=80):
+    cb = np.asarray(cb)
+
+    if np.isclose(vmax, vmin):
+        return np.full(cb.shape, min_size, dtype=float)
+
+    normalized = (cb - vmin) / (vmax - vmin)
+
+    return min_size + normalized * (max_size - min_size)
+
+
 def display_motion(path):
     c = c3d(path)
     point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
@@ -100,8 +111,20 @@ def display_motion_score_contribution(path, x, y, contribution, save_path):
 
     num_frame = point_data.shape[2]
     data = point_data[0:3, :, 0]
+    global_vmin = np.min(contribution)
+    global_vmax = np.max(contribution)
+
+    norm = colors.Normalize(
+        vmin=global_vmin,
+        vmax=global_vmax,
+    )
+
     cb = contribution[0]
-    norm = colors.Normalize(vmin=min(cb), vmax=max(cb))
+    sizes = contribution_to_size(
+        cb,
+        global_vmin,
+        global_vmax,
+    )
 
     x_range = np.max(point_data[0, :, :]) - np.min(point_data[0, :, :])
     y_range = np.max(point_data[1, :, :]) - np.min(point_data[1, :, :])
@@ -114,9 +137,7 @@ def display_motion_score_contribution(path, x, y, contribution, save_path):
     gs = fig.add_gridspec(9, 11)
     ax1 = fig.add_subplot(gs[1:9, 0:7], projection="3d")
 
-    sc = ax1.scatter(
-        data[0, :], data[1, :], data[2, :], c=cb, norm=norm, cmap="jet", s=5  # type: ignore
-    )
+    sc = ax1.scatter(data[0, :], data[1, :], data[2, :], c=cb, norm=norm, cmap="jet", s=sizes)  # type: ignore
     ft = ax1.set_title(f"frame num {0}")
 
     ax1.set_box_aspect([x_range, y_range, z_range])
@@ -146,6 +167,13 @@ def display_motion_score_contribution(path, x, y, contribution, save_path):
             norm = colors.Normalize(vmin=min(cb), vmax=max(cb))
             sc.set_array(cb)
             sc.set_norm(norm)
+            sc.set_sizes(
+                contribution_to_size(
+                    cb,
+                    global_vmin,
+                    global_vmax,
+                )
+            )
         ft.set_text(f"frame num {frame}")
         cbar.set_ticks([])
 

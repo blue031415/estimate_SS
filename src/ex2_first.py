@@ -13,7 +13,7 @@ from utils.display import display_motion_score_contribution
 from utils.readc3d import read_c3d
 
 DATA_PATH = Path("data") / "07_01.c3d"
-Dim = 5
+Dim = 4
 OUTPUT_PATH = Path("out") / "ex2" / f"07_01_first_d{Dim}.gif"
 FRAME_INTERVAL = 5
 CONTRIBUTION_THRESHOLD = 0.999
@@ -73,6 +73,7 @@ def calculate_difference_scores(subspaces, frame_interval):
 
 
 def main():
+    print(f"Dimention of common subspace: {Dim}")
     data = read_c3d(str(DATA_PATH))
     print(f"frame num: {data.shape[2]}")
 

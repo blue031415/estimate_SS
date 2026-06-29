@@ -14,7 +14,7 @@ from utils.display import display_motion_score_contribution
 from utils.readc3d import read_c3d
 
 DATA_PATH = Path("data") / "07_01.c3d"
-Dim = 4
+Dim = 5
 OUTPUT_PATH = Path("out") / "ex2" / f"07_01_second_d{Dim}.gif"
 FRAME_INTERVAL = 5
 CONTRIBUTION_THRESHOLD = 0.999
@@ -47,8 +47,7 @@ def eigendecompose_descending(matrix):
 
 def project_to_common_subspace(shape_subspaces, common_subspace):
     return [
-        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace))
-        for shape_subspace in shape_subspaces
+        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace)) for shape_subspace in shape_subspaces
     ]
 
 
@@ -63,7 +62,7 @@ def calculate_second_order_difference_DS(subspaces, frame_interval):
     contributions = []
 
     for frame in range(frame_interval, len(subspaces) - frame_interval):
-        S1 = subspaces[frame-frame_interval]
+        S1 = subspaces[frame - frame_interval]
         S2 = subspaces[frame]
         S3 = subspaces[frame + frame_interval]
 
@@ -86,17 +85,13 @@ def main():
     projection_matrix = average_projection_matrix(shape_subspaces)
     eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
 
-    indices, _, cumulative_ratio = select_eigen_indices(
-        eigen_values, threshold=CONTRIBUTION_THRESHOLD
-    )
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=CONTRIBUTION_THRESHOLD)
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
 
     common_subspace = eigen_vectors[:, indices[:Dim]]
     projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
-    magnitudes, contributions = calculate_second_order_difference_DS(
-        projected_subspaces, FRAME_INTERVAL
-    )
+    magnitudes, contributions = calculate_second_order_difference_DS(projected_subspaces, FRAME_INTERVAL)
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
