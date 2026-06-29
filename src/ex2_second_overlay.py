@@ -6,6 +6,7 @@ from scipy.linalg import eigh
 from subspace.utils import (
     cal_magnitude,
     gen_shape_difference_subspace,
+    gen_shape_principal_com_subspace,
     gen_shape_subspace,
     orthonormal_basis,
 )
@@ -14,7 +15,7 @@ from utils.readc3d import read_c3d
 
 DATA_PATH = Path("data") / "07_01.c3d"
 DIM_LIST = [4, 5, 6]
-OUTPUT_PATH = Path("out") / "ex2" / "07_01_first_d_456.gif"
+OUTPUT_PATH = Path("out") / "ex2" / "07_01_second_d_456.gif"
 FRAME_INTERVAL = 5
 CONTRIBUTION_THRESHOLD = 0.999
 
@@ -46,8 +47,7 @@ def eigendecompose_descending(matrix):
 
 def project_to_common_subspace(shape_subspaces, common_subspace):
     return [
-        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace))
-        for shape_subspace in shape_subspaces
+        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace)) for shape_subspace in shape_subspaces
     ]
 
 
@@ -57,17 +57,21 @@ def contribution_by_marker(difference_subspace, S1):
     return np.sum(np.square(basis), axis=1)
 
 
-def calculate_difference_scores(subspaces, frame_interval):
+def calculate_second_order_difference_DS(subspaces, frame_interval):
     magnitudes = []
     contributions = []
 
-    for frame in range(len(subspaces) - frame_interval):
-        S1 = subspaces[frame]
-        S2 = subspaces[frame + frame_interval]
-        difference_subspace = gen_shape_difference_subspace(S1, S2)
+    for frame in range(frame_interval, len(subspaces) - frame_interval):
+        S1 = subspaces[frame - frame_interval]
+        S2 = subspaces[frame]
+        S3 = subspaces[frame + frame_interval]
 
-        magnitudes.append(cal_magnitude(S1, S2))
-        contributions.append(contribution_by_marker(difference_subspace, S1))
+        M = gen_shape_principal_com_subspace(S1, S3)
+
+        difference_subspace = gen_shape_difference_subspace(S2, M)
+
+        magnitudes.append(cal_magnitude(M, S2))
+        contributions.append(contribution_by_marker(difference_subspace, S2))
 
     return magnitudes, contributions
 
@@ -80,9 +84,7 @@ def main():
     projection_matrix = average_projection_matrix(shape_subspaces)
     eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
 
-    indices, _, cumulative_ratio = select_eigen_indices(
-        eigen_values, threshold=CONTRIBUTION_THRESHOLD
-    )
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=CONTRIBUTION_THRESHOLD)
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
 
@@ -90,9 +92,7 @@ def main():
     contributions_list = {}
 
     # 射影前の差分部分空間の大きさ計算
-    magnitudes_origin, contributions_origin = calculate_difference_scores(
-        shape_subspaces, FRAME_INTERVAL
-    )
+    magnitudes_origin, contributions_origin = calculate_second_order_difference_DS(shape_subspaces, FRAME_INTERVAL)
 
     magnitudes_list.update({"origin": magnitudes_origin})
     contributions_list.update({"origin": contributions_origin})
@@ -100,7 +100,7 @@ def main():
     for dim in DIM_LIST:
         common_subspace = eigen_vectors[:, indices[:dim]]
         projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
-        magnitudes, contributions = calculate_difference_scores(projected_subspaces, FRAME_INTERVAL)
+        magnitudes, contributions = calculate_second_order_difference_DS(projected_subspaces, FRAME_INTERVAL)
         magnitudes_list.update({f"D = {dim}": magnitudes})
         contributions_list.update({f"D = {dim}": contributions})
 
@@ -108,7 +108,7 @@ def main():
 
     display_motion_some_score(
         str(DATA_PATH),
-        range(len(projected_subspaces) - FRAME_INTERVAL),
+        range(FRAME_INTERVAL, len(projected_subspaces) - FRAME_INTERVAL),
         list(magnitudes_list.values()),
         list(magnitudes_list.keys()),
         str(OUTPUT_PATH),
