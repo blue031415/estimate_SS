@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-from ezc3d import c3d
 
 # import scipy
 from matplotlib import colors
@@ -10,6 +9,25 @@ from matplotlib.animation import FuncAnimation
 
 # from scipy.linalg import eig
 from utils.preprocess import remove_nan
+
+
+def _as_point_data(data):
+    data = np.asarray(data)
+
+    if data.ndim != 3:
+        raise ValueError("data must be a 3D array")
+
+    if data.shape[1] == 3:
+        return np.swapaxes(data, 0, 1)  # (num_mark, XYZ, num_frame) -> (XYZ, num_mark, num_frame)
+
+    if data.shape[0] >= 3:
+        return data[0:3, :, :]  # (XYZ or XYZ1, num_mark, num_frame)
+
+    raise ValueError("data must have XYZ coordinates")
+
+
+def _display_title(title):
+    return os.path.basename(str(title)) if title is not None else ""
 
 
 def contribution_to_size(cb, vmin, vmax, min_size=5, max_size=80):
@@ -23,9 +41,8 @@ def contribution_to_size(cb, vmin, vmax, min_size=5, max_size=80):
     return min_size + normalized * (max_size - min_size)
 
 
-def display_motion(path):
-    c = c3d(path)
-    point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
+def display_motion(data):
+    point_data = _as_point_data(data)
     num_frame = point_data.shape[2]
     data = point_data[0:3, :, 0]
 
@@ -35,7 +52,7 @@ def display_motion(path):
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    sc = ax.scatter(data[0, :], data[1, :], data[2, :], s=5)
+    sc = ax.scatter(data[0, :], data[1, :], data[2, :], s=5)  # type: ignore
     ft = ax.set_title(f"frame num {0}")
 
     ax.set_box_aspect([x_range, y_range, z_range])
@@ -55,14 +72,13 @@ def display_motion(path):
     return ani
 
 
-def display_motion_score(path, x, y, save_path):
-    c = c3d(path)
-    point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
+def display_motion_score(data, x, y, save_path, title=None):
+    point_data = _as_point_data(data)
     point_data = np.nan_to_num(point_data)
     num_frame = point_data.shape[2]
     data = point_data[0:3, :, 0]
 
-    title = os.path.basename(path)
+    title = _display_title(title)
 
     x_range = np.max(point_data[0, :, :]) - np.min(point_data[0, :, :])
     y_range = np.max(point_data[1, :, :]) - np.min(point_data[1, :, :])
@@ -70,7 +86,7 @@ def display_motion_score(path, x, y, save_path):
 
     fig = plt.figure(figsize=(10, 4))
     ax1 = fig.add_subplot(121, projection="3d")
-    sc = ax1.scatter(data[0, :], data[1, :], data[2, :], s=5)
+    sc = ax1.scatter(data[0, :], data[1, :], data[2, :], s=5)  # type: ignore
     ft = ax1.set_title(f"frame num {0}")
 
     ax1.set_box_aspect([x_range, y_range, z_range])
@@ -100,13 +116,11 @@ def display_motion_score(path, x, y, save_path):
     ani.save(save_path, writer="pillow", fps=20)
 
 
-def display_motion_score_contribution(path, x, y, contribution, save_path):
+def display_motion_score_contribution(data, x, y, contribution, save_path, title=None):
     # config = Config()
-    title = os.path.basename(path)
+    title = _display_title(title)
 
-    c = c3d(path)
-    point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
-    point_data = point_data[0:3, :, :]
+    point_data = _as_point_data(data)
     point_data = remove_nan(point_data)
 
     num_frame = point_data.shape[2]
@@ -151,7 +165,7 @@ def display_motion_score_contribution(path, x, y, contribution, save_path):
     ax2.set_ylim(np.min(y), np.max(y))
     ax2.set_xlabel("frame")
     ax2.set_ylabel("value")
-    ax2.set_title(f"Dissimilarity of {os.path.splitext(os.path.basename(path))[0]} DS")
+    ax2.set_title(f"Dissimilarity of {os.path.splitext(title)[0]} DS")
     ax2.grid(True)
 
     cbar = plt.colorbar(sc, pad=0.2)
@@ -186,7 +200,7 @@ def display_motion_score_contribution(path, x, y, contribution, save_path):
 
 
 # 複数の波形を表示する
-def display_motion_some_score(path, x, y, y_label, save_path):
+def display_motion_some_score(data, x, y, y_label, save_path, title=None):
 
     # yはarray
     # y[0] 値1
@@ -194,11 +208,9 @@ def display_motion_some_score(path, x, y, y_label, save_path):
     # y_label[0] 値1のラベル
     # y_label[1] 値2のラベル
 
-    title = os.path.basename(path)
+    title = _display_title(title)
 
-    c = c3d(path)
-    point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
-    point_data = point_data[0:3, :, :]
+    point_data = _as_point_data(data)
     point_data = remove_nan(point_data)
 
     num_frame = point_data.shape[2]
@@ -236,7 +248,7 @@ def display_motion_some_score(path, x, y, y_label, save_path):
     ax2.set_ylim(np.min(y), np.max(y))
     ax2.set_xlabel("frame")
     ax2.set_ylabel("value")
-    ax2.set_title(f"Dissimilarity of {os.path.splitext(os.path.basename(path))[0]} DS")
+    ax2.set_title(f"Dissimilarity of {os.path.splitext(title)[0]} DS")
     ax2.grid(True)
 
     def update(frame):
@@ -256,12 +268,11 @@ def display_motion_some_score(path, x, y, y_label, save_path):
     ani.save(save_path, writer="pillow", fps=20)
 
 
-def display_point(path, frame):
-    c = c3d(path)
-    point_data = c["data"]["points"]  # (XYZ1, num_mark, num_frame)
+def display_point(data, frame):
+    point_data = _as_point_data(data)
     data = point_data[0:3, :, frame]
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    ax.scatter(data[0, :], data[1, :], data[2, :], s=5)
+    ax.scatter(data[0, :], data[1, :], data[2, :], s=5)  # type: ignore
     ax.set_box_aspect([1, 1, 2])
     plt.show()

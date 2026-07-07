@@ -107,11 +107,12 @@ def main():
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     display_motion_some_score(
-        str(DATA_PATH),
+        data,
         range(FRAME_INTERVAL, len(projected_subspaces) - FRAME_INTERVAL),
         list(magnitudes_list.values()),
         list(magnitudes_list.keys()),
         str(OUTPUT_PATH),
+        title=DATA_PATH.name,
     )
 
 
