@@ -123,19 +123,12 @@ def orthonormal_basis(arr):
 def along_geodesic(S1, S2, S3):
     # ６次元の和空間W(S1,S3)を作成
     W = np.concatenate([S1, S3], 1)
-    # W = W / np.linalg.norm(W, axis=0)
-    # W = gram_schmidt(W)
     W = orthonormal_basis(W)
 
-    # 部分空間S2の３本の基底を６次元の和空間W(S1,S3)に射影する
-    P = W @ W.T
-    V = P @ S2
+    # 部分空間S2の３本の基底を６次元の和空間W(S1,S3)に射影してS2’を求める
+    V = W @ (W.T @ S2)
 
-    # 射影された3本の基底に対してグラムシュミット直交化を適用してV:(S2’)を求める
-    # # 射影した基底ベクトルを正規化
-    # V = V / np.linalg.norm(V, axis=0)
-    # # グラムシュミット直交化
-    # V = gram_schmidt(V)
+    # 射影されたS2’の正規直交基底を求める
     V = orthonormal_basis(V)
 
     # Mをもとめる
@@ -144,45 +137,41 @@ def along_geodesic(S1, S2, S3):
     # 変動成分：D(M, S2')の大きさが２階差分部分空間の測地線に沿った変動成分１
     mag = cal_magnitude(M, V)
 
-    return mag
+    D = gen_shape_difference_subspace(M, V)
+    V1 = D @ (D.T @ S2)
+    # 射影した基底ベクトルを正規化
+    V1 = orthonormal_basis(V1)
+    # Vの各要素を2乗
+    contribution = np.sum(np.square(V1), axis=1)
+
+    return mag, contribution
 
 
 # D(S2, S2')の大きさが２階差分部分空間の測地線に直交する変動成分２
-def orth_decomposition_geodesic(S1, S2, S3, cfg):
+def orth_decomposition_geodesic(S1, S2, S3):
     # ６次元の和空間W(S1,S3)を作成
     W = np.concatenate([S1, S3], 1)
-    # W = W / np.linalg.norm(W, axis=0)
-    # W = gram_schmidt(W)
     W = orthonormal_basis(W)
 
-    # 部分空間S2の３本の基底を６次元の和空間W(S1,S3)に射影する
-    P = W @ W.T
-    V = P @ S2
+    # 部分空間S2の３本の基底を６次元の和空間W(S1,S3)に射影してS2’を求める
+    V = W @ (W.T @ S2)
 
-    # 射影された3本の基底に対してグラムシュミット直交化を適用してV:(S2’)を求める
-    # # 射影した基底ベクトルを正規化
-    # V = V / np.linalg.norm(V, axis=0)
-    # # グラムシュミット直交化
-    # V = gram_schmidt(V)
+    # 射影されたS2’の正規直交基底を求める
     V = orthonormal_basis(V)
 
     # 変動成分：D(S2, S2')の大きさが２階差分部分空間の測地線に直交する変動成分
     mag = cal_magnitude(S2, V)
 
     # S2とS2'の差分部分空間を求め射影し、各点の影響度を計算する。
-    D = gen_shape_difference_subspace(S2, V, 3)
+    D = gen_shape_difference_subspace(S2, V)
     V1 = D @ (D.T @ S2)
-    # # 射影した基底ベクトルを正規化
-    # V1 = V1 / np.linalg.norm(V1, axis=0)
-    # # グラムシュミット直交化
-    # V1 = gram_schmidt(V1)
+    # 射影した基底ベクトルを正規化
     V1 = orthonormal_basis(V1)
 
     # Vの各要素を2乗
-    V1 = np.square(V1)
-    V1 = np.sum(V1, axis=1)
+    contribution = np.sum(np.square(V1), axis=1)
 
-    return mag, V1
+    return mag, contribution
 
 
 if __name__ == "__main__":
