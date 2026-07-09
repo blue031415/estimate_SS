@@ -99,27 +99,30 @@ def main():
 
     OUTPUT_PATH_ALONG.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
-        str(DATA_PATH),
+        data,
         range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
         magnitudes_along,
         contributions_along,
         str(OUTPUT_PATH_ALONG),
+        title=DATA_PATH.name,
     )
     OUTPUT_PATH_ORTH.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
-        str(DATA_PATH),
+        data,
         range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
         magnitudes_orth,
         contributions_orth,
         str(OUTPUT_PATH_ORTH),
+        title=DATA_PATH.name,
     )
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     display_motion_some_score(
-        str(DATA_PATH),
+        data,
         range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
         [magnitudes_along, magnitudes_orth],
         ["along geodesic", "orth to geodesic"],
         str(OUTPUT_PATH),
+        title=DATA_PATH.name,
     )
 
 

@@ -85,11 +85,12 @@ def main():
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
-        str(DATA_PATH),
+        data,
         range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
         magnitudes,
         contributions,
         str(OUTPUT_PATH),
+        title=DATA_PATH.name,
     )
 
 
