@@ -17,6 +17,9 @@ def _as_point_data(data):
     if data.ndim != 3:
         raise ValueError("data must be a 3D array")
 
+    if data.shape[2] == 3:
+        return data.transpose(2, 1, 0)  # (num_frame, num_mark, XYZ) -> (XYZ, num_mark, num_frame)
+
     if data.shape[1] == 3:
         return np.swapaxes(data, 0, 1)  # (num_mark, XYZ, num_frame) -> (XYZ, num_mark, num_frame)
 

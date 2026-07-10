@@ -11,5 +11,4 @@ if __name__ == "__main__":
     cov = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
 
     noise = gen_noise(mean, cov, 10)
-
-    print(noise)
+    print(noise.shape)

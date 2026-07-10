@@ -28,7 +28,7 @@ def select_eigen_indices(eigen_values, threshold=0.95):
 
 
 def build_shape_subspaces(data):
-    return [gen_shape_subspace(data[:, :, frame]) for frame in range(data.shape[2])]
+    return [gen_shape_subspace(data[frame, :, :]) for frame in range(data.shape[0])]
 
 
 def average_projection_matrix(subspaces):
@@ -78,8 +78,8 @@ def calculate_second_order_difference_DS(subspaces, frame_interval):
 
 def main():
     print(f"Dimention of common subspace: {Dim}")
-    data = read_c3d(str(DATA_PATH))
-    print(f"frame num: {data.shape[2]}")
+    data = read_c3d(str(DATA_PATH), return_labels=False)
+    print(f"frame num: {data.shape[0]}")  # type: ignore
 
     shape_subspaces = build_shape_subspaces(data)
     projection_matrix = average_projection_matrix(shape_subspaces)

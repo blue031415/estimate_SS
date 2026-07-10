@@ -50,14 +50,14 @@ def main():
     data = read_c3d(path)
     # print(data.shape)
     shape_subspace_list = []
-    print(f"frame num: {data.shape[2]}")
-    P = np.zeros((data.shape[0], data.shape[0]))
-    for i in range(data.shape[2]):
-        S = gen_shape_subspace(data[:, :, i])
+    print(f"frame num: {data.shape[0]}")
+    P = np.zeros((data.shape[1], data.shape[1]))
+    for i in range(data.shape[0]):
+        S = gen_shape_subspace(data[i, :, :])
         shape_subspace_list.append(S)
         P += S @ S.T
 
-    P /= data.shape[2]
+    P /= data.shape[0]
     eigen_val, eigen_vec = eigh(P)
     eigen_val, eigen_vec = eigen_val[::-1], eigen_vec[:, ::-1]
 
@@ -73,13 +73,9 @@ def main():
     # print(common_subspace.shape)
     P_common = common_subspace @ common_subspace.T
 
-    p_list = [
-        orthonormal_basis(P_common @ shape_subspace) for shape_subspace in shape_subspace_list
-    ]
+    p_list = [orthonormal_basis(P_common @ shape_subspace) for shape_subspace in shape_subspace_list]
 
-    magnitudes = [
-        cal_magnitude(p, shape_subspace) for p, shape_subspace in zip(p_list, shape_subspace_list)
-    ]
+    magnitudes = [cal_magnitude(p, shape_subspace) for p, shape_subspace in zip(p_list, shape_subspace_list)]
 
     mag_max, mag_maxidx = np.max(magnitudes), np.argmax(magnitudes)
     mag_min, mag_minidx = np.min(magnitudes), np.argmin(magnitudes)

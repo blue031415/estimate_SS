@@ -28,7 +28,7 @@ def select_eigen_indices(eigen_values, threshold=0.95):
 
 
 def build_shape_subspaces(data):
-    return [gen_shape_subspace(data[:, :, frame]) for frame in range(data.shape[2])]
+    return [gen_shape_subspace(data[frame, :, :]) for frame in range(data.shape[0])]
 
 
 def average_projection_matrix(subspaces):
@@ -81,18 +81,9 @@ def calculate_geodestic(subspaces, frame_interval):
 
 def main():
     data = read_c3d(str(DATA_PATH))
-    print(f"frame num: {data.shape[2]}")
+    print(f"frame num: {data.shape[0]}")
 
     shape_subspaces = build_shape_subspaces(data)
-    # projection_matrix = average_projection_matrix(shape_subspaces)
-    # eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
-
-    # indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=CONTRIBUTION_THRESHOLD)
-    # print(f"selected indices: {indices}")
-    # print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
-
-    # common_subspace = eigen_vectors[:, indices[:Dim]]
-    # projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
     magnitudes_along, contributions_along, magnitudes_orth, contributions_orth = calculate_geodestic(
         shape_subspaces, FRAME_INTERVAL
     )
