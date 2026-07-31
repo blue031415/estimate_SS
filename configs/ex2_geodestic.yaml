@@ -1,0 +1,8 @@
+data_path: ../data/07_01.c3d
+dimension: 5
+output_path_along: ../out/ex2/07_01_along_geodestic_d5.gif
+output_path_orth: ../out/ex2/07_01_orth_geodestic_d5.gif
+output_path: ../out/ex2/07_01_geodestic_d5.gif
+frame_interval: 5
+contribution_threshold: 0.999
+

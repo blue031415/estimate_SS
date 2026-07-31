@@ -1,121 +1,66 @@
+"""Geodesic decomposition on the original, unprojected shape subspaces."""
+
 from pathlib import Path
 
-import numpy as np
-from scipy.linalg import eigh
-
-from subspace.utils import (
-    along_geodesic,
-    gen_shape_subspace,
-    orth_decomposition_geodesic,
-    orthonormal_basis,
-)
+from experiments.analysis import build_shape_subspaces, calculate_geodestic
 from utils.display import display_motion_score_contribution, display_motion_some_score
+from utils.experiment_config import load_experiment_config, parse_config_path
 from utils.readc3d import read_c3d
 
-DATA_PATH = Path("data") / "07_01.c3d"
-OUTPUT_PATH_ALONG = Path("out") / "ex2" / "07_01_along_geodestic_origin.gif"
-OUTPUT_PATH_ORTH = Path("out") / "ex2" / "07_01_orth_geodestic_origin.gif"
-OUTPUT_PATH = Path("out") / "ex2" / "07_01_geodestic_origin.gif"
-FRAME_INTERVAL = 5
-CONTRIBUTION_THRESHOLD = 0.999
+DEFAULT_CONFIG = {
+    "data_path": Path("data") / "07_01.c3d",
+    "output_path_along": Path("out") / "ex2" / "07_01_along_geodestic_origin.gif",
+    "output_path_orth": Path("out") / "ex2" / "07_01_orth_geodestic_origin.gif",
+    "output_path": Path("out") / "ex2" / "07_01_geodestic_origin.gif",
+    "frame_interval": 5,
+}
 
 
-def select_eigen_indices(eigen_values, threshold=0.95):
-    contribution_ratio = eigen_values / np.sum(eigen_values)
-    cumulative_ratio = np.cumsum(contribution_ratio)
-    dim = np.searchsorted(cumulative_ratio, threshold) + 1
-    return np.arange(dim), contribution_ratio, cumulative_ratio
+def main(config_path=None):
+    config = load_experiment_config(DEFAULT_CONFIG, config_path)
+    data_path = config["data_path"]
+    frame_interval = config["frame_interval"]
 
-
-def build_shape_subspaces(data):
-    return [gen_shape_subspace(data[frame, :, :]) for frame in range(data.shape[0])]
-
-
-def average_projection_matrix(subspaces):
-    projection_sum = np.zeros((subspaces[0].shape[0], subspaces[0].shape[0]))
-
-    for subspace in subspaces:
-        projection_sum += subspace @ subspace.T
-
-    return projection_sum / len(subspaces)
-
-
-def eigendecompose_descending(matrix):
-    eigen_values, eigen_vectors = eigh(matrix)
-    return eigen_values[::-1], eigen_vectors[:, ::-1]
-
-
-def project_to_common_subspace(shape_subspaces, common_subspace):
-    return [
-        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace)) for shape_subspace in shape_subspaces
-    ]
-
-
-def contribution_by_marker(difference_subspace, S):
-    projected = difference_subspace @ (difference_subspace.T @ S)
-    basis = orthonormal_basis(projected)
-    return np.sum(np.square(basis), axis=1)
-
-
-def calculate_geodestic(subspaces, frame_interval):
-    magnitudes_along = []
-    magnitudes_orth = []
-    contributions_along = []
-    contributions_orth = []
-
-    for frame in range(frame_interval, len(subspaces) - frame_interval):
-        S1 = subspaces[frame - frame_interval]
-        S2 = subspaces[frame]
-        S3 = subspaces[frame + frame_interval]
-
-        mag_along, contribution_along = along_geodesic(S1, S2, S3)
-        mag_orth, contribution_orth = orth_decomposition_geodesic(S1, S2, S3)
-
-        magnitudes_along.append(mag_along)
-        magnitudes_orth.append(mag_orth)
-        contributions_along.append(contribution_along)
-        contributions_orth.append(contribution_orth)
-
-    return magnitudes_along, contributions_along, magnitudes_orth, contributions_orth
-
-
-def main():
-    data = read_c3d(str(DATA_PATH))
+    # Decompose changes in the original shape subspaces.
+    data = read_c3d(str(data_path))
     print(f"frame num: {data.shape[0]}")
-
     shape_subspaces = build_shape_subspaces(data)
     magnitudes_along, contributions_along, magnitudes_orth, contributions_orth = calculate_geodestic(
-        shape_subspaces, FRAME_INTERVAL
+        shape_subspaces, frame_interval
     )
+    frames = range(frame_interval, len(shape_subspaces) - frame_interval)
 
-    OUTPUT_PATH_ALONG.parent.mkdir(parents=True, exist_ok=True)
+    output_path_along = config["output_path_along"]
+    output_path_orth = config["output_path_orth"]
+    output_path = config["output_path"]
+    output_path_along.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
         data,
-        range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
+        frames,
         magnitudes_along,
         contributions_along,
-        str(OUTPUT_PATH_ALONG),
-        title=DATA_PATH.name,
+        str(output_path_along),
+        title=data_path.name,
     )
-    OUTPUT_PATH_ORTH.parent.mkdir(parents=True, exist_ok=True)
+    output_path_orth.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
         data,
-        range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
+        frames,
         magnitudes_orth,
         contributions_orth,
-        str(OUTPUT_PATH_ORTH),
-        title=DATA_PATH.name,
+        str(output_path_orth),
+        title=data_path.name,
     )
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     display_motion_some_score(
         data,
-        range(FRAME_INTERVAL, len(shape_subspaces) - FRAME_INTERVAL),
+        frames,
         [magnitudes_along, magnitudes_orth],
         ["along geodesic", "orth to geodesic"],
-        str(OUTPUT_PATH),
-        title=DATA_PATH.name,
+        str(output_path),
+        title=data_path.name,
     )
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_config_path(__doc__))

@@ -1,0 +1,4 @@
+data_path: ../data/07_01.c3d
+output_path: ../out/ex1/eigen_val.png
+contribution_threshold: 0.99
+

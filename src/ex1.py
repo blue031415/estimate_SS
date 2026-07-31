@@ -1,88 +1,68 @@
-# from util.display import display_motion
+"""Experiment 1: estimate and evaluate the common shape subspace."""
+
 from pathlib import Path
-from subspace.utils import gen_shape_subspace, cal_magnitude, orthonormal_basis
-from utils.readc3d import read_c3d
+
 import numpy as np
 from matplotlib import pyplot as plt
 
-from scipy.linalg import eigh
+from experiments.analysis import (
+    average_projection_matrix,
+    build_shape_subspaces,
+    eigendecompose_descending,
+    project_to_common_subspace,
+    select_eigen_indices,
+)
+from subspace.utils import cal_magnitude
+from utils.experiment_config import load_experiment_config, parse_config_path
+from utils.readc3d import read_c3d
 
-path = str(Path("data") / "07_01.c3d")
+DEFAULT_CONFIG = {
+    "data_path": Path("data") / "07_01.c3d",
+    "output_path": Path("out") / "ex1" / "eigen_val.png",
+    "contribution_threshold": 0.999,
+}
 
 
-def plot_eigen_val_log(eigen_val):
-    eigen_val = eigen_val[eigen_val > 0]
+def plot_eigen_values(eigen_values, path):
     plt.figure()
-    plt.plot(np.arange(1, len(eigen_val) + 1), eigen_val, marker="o")
-    x = np.arange(1, len(eigen_val) + 1)
-    plt.xticks(x)
-    plt.yscale("log")
+    plt.plot(np.arange(1, len(eigen_values) + 1), eigen_values, marker="o")
+    plt.xticks(np.arange(1, len(eigen_values) + 1))
     plt.xlabel("rank")
     plt.ylabel("eigenvalue")
     plt.title("Eigenvalues of averaged projection matrix")
     plt.grid(True)
-    plt.show()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(path)
+    plt.close()
 
 
-def plot_eigen_val(eigen_val, path=None):
-    plt.figure()
-    plt.plot(np.arange(1, len(eigen_val) + 1), eigen_val, marker="o")
-    x = np.arange(1, len(eigen_val) + 1)
-    plt.xticks(x)
-    plt.xlabel("rank")
-    plt.ylabel("eigenvalue")
-    plt.title("Eigenvalues of averaged projection matrix")
-    plt.grid(True)
-    if path:
-        plt.savefig(path)
-    else:
-        plt.show()
+def main(config_path=None):
+    config = load_experiment_config(DEFAULT_CONFIG, config_path)
+    data_path = config["data_path"]
 
-
-def select_eigen_indices(eigen_val, threshold=0.95):
-    contribution_ratio = eigen_val / np.sum(eigen_val)
-    cumulative_ratio = np.cumsum(contribution_ratio)
-    dim = np.searchsorted(cumulative_ratio, threshold) + 1
-    return np.arange(dim), contribution_ratio, cumulative_ratio
-
-
-def main():
-    data = read_c3d(path)
-    # print(data.shape)
-    shape_subspace_list = []
+    # 1. Build one shape subspace per input frame.
+    data = read_c3d(str(data_path))
     print(f"frame num: {data.shape[0]}")
-    P = np.zeros((data.shape[1], data.shape[1]))
-    for i in range(data.shape[0]):
-        S = gen_shape_subspace(data[i, :, :])
-        shape_subspace_list.append(S)
-        P += S @ S.T
+    shape_subspaces = build_shape_subspaces(data)
 
-    P /= data.shape[0]
-    eigen_val, eigen_vec = eigh(P)
-    eigen_val, eigen_vec = eigen_val[::-1], eigen_vec[:, ::-1]
-
-    indices, _, cumulative_ratio = select_eigen_indices(eigen_val, threshold=0.999)
-
+    # 2. Estimate the common subspace and select dimensions by cumulative contribution.
+    projection_matrix = average_projection_matrix(shape_subspaces)
+    eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=config["contribution_threshold"])
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
-    plot_eigen_val(eigen_val[indices], "out\\ex1\\eigen_val.png")
+    plot_eigen_values(eigen_values[indices], config["output_path"])
 
-    # 以下部分空間の次元は５とする。これは固有値の寄与率が0.99を超える最小の次元である。
-
-    common_subspace = eigen_vec[:, indices]
-    # print(common_subspace.shape)
-    P_common = common_subspace @ common_subspace.T
-
-    p_list = [orthonormal_basis(P_common @ shape_subspace) for shape_subspace in shape_subspace_list]
-
-    magnitudes = [cal_magnitude(p, shape_subspace) for p, shape_subspace in zip(p_list, shape_subspace_list)]
-
-    mag_max, mag_maxidx = np.max(magnitudes), np.argmax(magnitudes)
-    mag_min, mag_minidx = np.min(magnitudes), np.argmin(magnitudes)
+    # 3. Project every frame and measure the distance from its original subspace.
+    common_subspace = eigen_vectors[:, indices]
+    projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
+    magnitudes = [
+        cal_magnitude(projected, original) for projected, original in zip(projected_subspaces, shape_subspaces)
+    ]
     print(f"average magnitude: {np.mean(magnitudes)}")
-    print(f"max magnitude: {mag_max} at frame {mag_maxidx}")
-    print(f"min magnitude: {mag_min} at frame {mag_minidx}")
+    print(f"max magnitude: {np.max(magnitudes)} at frame {np.argmax(magnitudes)}")
+    print(f"min magnitude: {np.min(magnitudes)} at frame {np.argmin(magnitudes)}")
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_config_path(__doc__))

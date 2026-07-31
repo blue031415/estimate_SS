@@ -1,145 +1,93 @@
-# from util.display import display_motion
+"""Experiment 3: inject marker noise and inspect the common shape subspace."""
+
 from pathlib import Path
-from subspace.utils import gen_shape_subspace, cal_magnitude, orthonormal_basis
-from utils.readc3d import read_c3d
-from utils.gen_noise import gen_noise
+
 import numpy as np
 from matplotlib import pyplot as plt
 
-from scipy.linalg import eigh
+from experiments.analysis import (
+    average_projection_matrix,
+    build_shape_subspaces,
+    eigendecompose_descending,
+    project_to_common_subspace,
+    select_eigen_indices,
+)
+from experiments.noise import add_noise_to_markers, marker_indices
+from subspace.utils import cal_magnitude
+from utils.experiment_config import load_experiment_config, parse_config_path
+from utils.readc3d import read_c3d
 
-DATA_PATH = Path("data") / "07_01.c3d"
-OUTPUT_PATH = Path("out") / "ex3" / "eigen_val_noise.png"
-CONTRIBUTION_THRESHOLD = 0.999
-mean = np.array([0.0, 0.0, 0.0])
-cov = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-NOISE_START_FRAME = 150
-NOISE_END_FRAME = 250
-NOISE_SCALE = 30
-NOISE_BODY_PARTS = ["left_arm"]
-
-BODY_PART_MARKERS = {
-    "head": ["RFHD", "LFHD", "RBHD", "LBHD"],
-    "torso": ["C7", "T10", "CLAV", "STRN", "RBAC", "RFWT", "LFWT", "RBWT", "LBWT"],
-    "left_arm": ["LSHO", "LUPA", "LELB", "LFRM", "LWRA", "LWRB", "LFIN"],
-    "right_arm": ["RSHO", "RUPA", "RELB", "RFRM", "RWRA", "RWRB", "RFIN"],
-    "left_leg": ["LTHI", "LKNE", "LSHN", "LANK"],
-    "right_leg": ["RTHI", "RKNE", "RSHN", "RANK"],
-    "left_foot": ["LHEE", "LTOE", "LMT5"],
-    "right_foot": ["RHEE", "RTOE", "RMT5"],
+DEFAULT_CONFIG = {
+    "data_path": Path("data") / "07_01.c3d",
+    "output_path": Path("out") / "ex3" / "eigen_val_noise.png",
+    "contribution_threshold": 0.999,
+    "noise": {
+        "start_frame": 150,
+        "end_frame": 250,
+        "scale": 30,
+        "body_parts": ["left_arm"],
+        "mean": [0.0, 0.0, 0.0],
+        "covariance": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    },
 }
 
 
-def plot_eigen_val_log(eigen_val):
-    eigen_val = eigen_val[eigen_val > 0]
+def plot_eigen_values(eigen_values, path):
     plt.figure()
-    plt.plot(np.arange(1, len(eigen_val) + 1), eigen_val, marker="o")
-    x = np.arange(1, len(eigen_val) + 1)
-    plt.xticks(x)
-    plt.yscale("log")
+    plt.plot(np.arange(1, len(eigen_values) + 1), eigen_values, marker="o")
+    plt.xticks(np.arange(1, len(eigen_values) + 1))
     plt.xlabel("rank")
     plt.ylabel("eigenvalue")
     plt.title("Eigenvalues of averaged projection matrix")
     plt.grid(True)
-    plt.show()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(path)
+    plt.close()
 
 
-def plot_eigen_val(eigen_val, path=None):
-    plt.figure()
-    plt.plot(np.arange(1, len(eigen_val) + 1), eigen_val, marker="o")
-    x = np.arange(1, len(eigen_val) + 1)
-    plt.xticks(x)
-    plt.xlabel("rank")
-    plt.ylabel("eigenvalue")
-    plt.title("Eigenvalues of averaged projection matrix")
-    plt.grid(True)
-    if path:
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        plt.savefig(path)
-        plt.close()
-    else:
-        plt.show()
+def main(config_path=None):
+    config = load_experiment_config(DEFAULT_CONFIG, config_path)
+    data_path = config["data_path"]
+    output_path = config["output_path"]
+    noise = config["noise"]
 
+    # 1. Read motion data and select the markers to perturb.
+    data, labels = read_c3d(str(data_path), return_labels=True)
+    noise_indices = marker_indices(labels, noise["body_parts"])
+    print(f"noise body parts: {noise['body_parts']}")
+    print(f"noise markers: {[labels[index] for index in noise_indices]}")
 
-def select_eigen_indices(eigen_val, threshold=0.95):
-    contribution_ratio = eigen_val / np.sum(eigen_val)
-    cumulative_ratio = np.cumsum(contribution_ratio)
-    dim = np.searchsorted(cumulative_ratio, threshold) + 1
-    return np.arange(dim), contribution_ratio, cumulative_ratio
-
-
-def marker_name(label):
-    return label.split(":")[-1]
-
-
-def marker_indices(labels, body_parts):
-    unknown_parts = sorted(set(body_parts) - set(BODY_PART_MARKERS))
-    if unknown_parts:
-        raise ValueError(f"Unknown body parts: {unknown_parts}")
-
-    target_markers = {marker for body_part in body_parts for marker in BODY_PART_MARKERS[body_part]}
-    indices = [i for i, label in enumerate(labels) if marker_name(label) in target_markers]
-    if not indices:
-        raise ValueError(f"No markers found for body parts: {body_parts}")
-    return indices
-
-
-def add_noise_to_markers(data, indices, start_frame, end_frame, scale):
-    noisy_data = data.copy()
-
-    for frame in range(start_frame, end_frame):
-        noisy_data[frame, indices, :] += scale * gen_noise(mean, cov, len(indices))
-
-    return noisy_data
-
-
-def main():
-    data, labels = read_c3d(str(DATA_PATH), return_labels=True)
-    noise_indices = marker_indices(labels, NOISE_BODY_PARTS)
-    print(f"noise body parts: {NOISE_BODY_PARTS}")
-    print(f"noise markers: {[labels[i] for i in noise_indices]}")
+    # 2. Add noise only to the configured markers and frame range.
     noisy_data = add_noise_to_markers(
         data,
         noise_indices,
-        NOISE_START_FRAME,
-        NOISE_END_FRAME,
-        NOISE_SCALE,
+        noise["start_frame"],
+        noise["end_frame"],
+        noise["scale"],
+        noise["mean"],
+        noise["covariance"],
     )
 
-    shape_subspace_list = []
+    # 3. Build one shape subspace per frame and estimate their common subspace.
     print(f"frame num: {noisy_data.shape[0]}")
-    P = np.zeros((noisy_data.shape[1], noisy_data.shape[1]))
-    for i in range(noisy_data.shape[0]):
-        S = gen_shape_subspace(noisy_data[i, :, :])
-        shape_subspace_list.append(S)
-        P += S @ S.T
-
-    P /= noisy_data.shape[0]
-    eigen_val, eigen_vec = eigh(P)
-    eigen_val, eigen_vec = eigen_val[::-1], eigen_vec[:, ::-1]
-
-    indices, _, cumulative_ratio = select_eigen_indices(eigen_val, threshold=CONTRIBUTION_THRESHOLD)
-
+    shape_subspaces = build_shape_subspaces(noisy_data)
+    projection_matrix = average_projection_matrix(shape_subspaces)
+    eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=config["contribution_threshold"])
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
-    plot_eigen_val(eigen_val[indices], str(OUTPUT_PATH))
+    plot_eigen_values(eigen_values[indices], output_path)
 
-    # 以下部分空間の次元は５とする。これは固有値の寄与率が0.99を超える最小の次元である。
-
-    common_subspace = eigen_vec[:, indices]
-    # print(common_subspace.shape)
-    P_common = common_subspace @ common_subspace.T
-
-    p_list = [orthonormal_basis(P_common @ shape_subspace) for shape_subspace in shape_subspace_list]
-
-    magnitudes = [cal_magnitude(p, shape_subspace) for p, shape_subspace in zip(p_list, shape_subspace_list)]
-
-    mag_max, mag_maxidx = np.max(magnitudes), np.argmax(magnitudes)
-    mag_min, mag_minidx = np.min(magnitudes), np.argmin(magnitudes)
+    # 4. Project each frame into the common subspace and report the residual magnitude.
+    common_subspace = eigen_vectors[:, indices]
+    projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
+    magnitudes = [
+        cal_magnitude(projected, original) for projected, original in zip(projected_subspaces, shape_subspaces)
+    ]
     print(f"average magnitude: {np.mean(magnitudes)}")
-    print(f"max magnitude: {mag_max} at frame {mag_maxidx}")
-    print(f"min magnitude: {mag_min} at frame {mag_minidx}")
+    print(f"max magnitude: {np.max(magnitudes)} at frame {np.argmax(magnitudes)}")
+    print(f"min magnitude: {np.min(magnitudes)} at frame {np.argmin(magnitudes)}")
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_config_path(__doc__))

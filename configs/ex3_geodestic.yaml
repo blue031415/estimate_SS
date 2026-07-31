@@ -1,0 +1,18 @@
+data_path: ../data/07_01.c3d
+dimension: 11
+output_path_along: ../out/ex3/07_01_along_geodestic_d11.gif
+output_path_orth: ../out/ex3/07_01_orth_geodestic_d11.gif
+output_path: ../out/ex3/07_01_geodestic_d11.gif
+frame_interval: 5
+contribution_threshold: 0.999
+noise:
+  start_frame: 200
+  end_frame: 250
+  scale: 30
+  body_parts: [left_arm]
+  mean: [0.0, 0.0, 0.0]
+  covariance:
+    - [1.0, 0.0, 0.0]
+    - [0.0, 1.0, 0.0]
+    - [0.0, 0.0, 1.0]
+
