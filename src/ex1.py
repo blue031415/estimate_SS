@@ -12,7 +12,7 @@ from experiments.common_subspace import (
     project_to_common_subspace,
     select_eigen_indices,
 )
-from subspace.utils import cal_magnitude
+from subspace import cal_magnitude
 from experiments.config import load_experiment_config, parse_config_path
 from utils.c3d import read_c3d
 

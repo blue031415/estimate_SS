@@ -14,7 +14,7 @@ from experiments.common_subspace import (
 )
 from experiments.config import load_experiment_config, parse_config_path
 from experiments.noise import add_noise_to_markers, marker_indices
-from subspace.utils import cal_magnitude
+from subspace import cal_magnitude
 from utils.c3d import read_c3d
 
 DEFAULT_CONFIG = {

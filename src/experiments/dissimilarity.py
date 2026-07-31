@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from subspace.utils import (
+from subspace import (
     along_geodesic,
     cal_magnitude,
     gen_shape_difference_subspace,

@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.linalg import eigh
 
-from subspace.utils import gen_shape_subspace, orthonormal_basis
+from subspace import gen_shape_subspace, orthonormal_basis
 
 
 def select_eigen_indices(eigen_values, threshold=0.95):

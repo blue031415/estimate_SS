@@ -54,3 +54,18 @@ src/ex3_geodestic.py         <-> configs/ex3_geodestic.yaml
 - `utils/display.py`: モーションと評価値の可視化
 
 実験の順序や、どの計算を組み合わせるかは各 `ex*.py` に残しています。
+
+## subspace パッケージ
+
+形状部分空間の基礎計算は `subspace` パッケージ内で完結しています。
+
+- `subspace/decomposition.py`: SVD、Gram-Schmidt、正規直交基底
+- `subspace/shape.py`: 形状・差分・主成分部分空間と距離
+- `subspace/geodesic.py`: 測地線方向と直交方向への分解
+- `subspace/__init__.py`: 外部へ公開するAPI
+
+利用側は内部構成に依存せず、次のようにインポートします。
+
+```python
+from subspace import cal_magnitude, gen_shape_subspace
+```
