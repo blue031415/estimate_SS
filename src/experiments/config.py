@@ -1,3 +1,5 @@
+"""Command-line and YAML configuration for individual experiment scripts."""
+
 import argparse
 from copy import deepcopy
 from pathlib import Path

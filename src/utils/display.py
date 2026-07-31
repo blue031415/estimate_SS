@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 # from scipy.linalg import eig
-from utils.preprocess import remove_nan
+from utils.c3d import remove_nan
 
 
 def _as_point_data(data):

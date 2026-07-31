@@ -5,17 +5,17 @@ from pathlib import Path
 import numpy as np
 from matplotlib import pyplot as plt
 
-from experiments.analysis import (
+from experiments.common_subspace import (
     average_projection_matrix,
     build_shape_subspaces,
     eigendecompose_descending,
     project_to_common_subspace,
     select_eigen_indices,
 )
+from experiments.config import load_experiment_config, parse_config_path
 from experiments.noise import add_noise_to_markers, marker_indices
 from subspace.utils import cal_magnitude
-from utils.experiment_config import load_experiment_config, parse_config_path
-from utils.readc3d import read_c3d
+from utils.c3d import read_c3d
 
 DEFAULT_CONFIG = {
     "data_path": Path("data") / "07_01.c3d",

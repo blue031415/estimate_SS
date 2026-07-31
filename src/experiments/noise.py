@@ -1,7 +1,5 @@
 import numpy as np
 
-from utils.gen_noise import gen_noise
-
 BODY_PART_MARKERS = {
     "head": ["RFHD", "LFHD", "RBHD", "LBHD"],
     "torso": ["C7", "T10", "CLAV", "STRN", "RBAC", "RFWT", "LFWT", "RBWT", "LBWT"],
@@ -31,6 +29,9 @@ def marker_indices(labels, body_parts):
 
 def add_noise_to_markers(data, indices, start_frame, end_frame, scale, mean, covariance):
     noisy_data = data.copy()
+    mean = np.asarray(mean)
+    covariance = np.asarray(covariance)
     for frame in range(start_frame, end_frame):
-        noisy_data[frame, indices, :] += scale * gen_noise(np.asarray(mean), np.asarray(covariance), len(indices))
+        noise = np.random.multivariate_normal(mean, covariance, len(indices))
+        noisy_data[frame, indices, :] += scale * noise
     return noisy_data

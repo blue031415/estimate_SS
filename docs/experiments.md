@@ -46,9 +46,11 @@ src/ex3_geodestic.py         <-> configs/ex3_geodestic.yaml
 
 共通モジュールは次の役割に限定しています。
 
-- `experiments/analysis.py`: 部分空間に対する再利用可能な数値計算
-- `experiments/noise.py`: マーカー選択とノイズ付加
-- `utils/experiment_config.py`: YAML の読込、既定値とのマージ、パス解決
+- `experiments/common_subspace.py`: 形状部分空間の構築、固有値分解、共通部分空間への射影
+- `experiments/dissimilarity.py`: 1階・2階差分と測地線分解による評価
+- `experiments/noise.py`: マーカー選択、乱数生成、ノイズ付加
+- `experiments/config.py`: YAML の読込、既定値とのマージ、パス解決
+- `utils/c3d.py`: C3D の読込と点群データの NaN 除去
+- `utils/display.py`: モーションと評価値の可視化
 
 実験の順序や、どの計算を組み合わせるかは各 `ex*.py` に残しています。
-

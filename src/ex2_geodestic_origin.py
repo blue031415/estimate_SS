@@ -2,10 +2,11 @@
 
 from pathlib import Path
 
-from experiments.analysis import build_shape_subspaces, calculate_geodestic
+from experiments.common_subspace import build_shape_subspaces
+from experiments.config import load_experiment_config, parse_config_path
+from experiments.dissimilarity import calculate_geodestic
 from utils.display import display_motion_score_contribution, display_motion_some_score
-from utils.experiment_config import load_experiment_config, parse_config_path
-from utils.readc3d import read_c3d
+from utils.c3d import read_c3d
 
 DEFAULT_CONFIG = {
     "data_path": Path("data") / "07_01.c3d",

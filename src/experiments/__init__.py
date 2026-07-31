@@ -1,1 +1,1 @@
-"""Shared calculations used by the individual experiment scripts."""
+"""Configuration and reusable domain operations for experiment scripts."""

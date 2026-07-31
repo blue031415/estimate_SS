@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 from ex3 import DEFAULT_CONFIG
-from utils.experiment_config import load_experiment_config
+from experiments.config import load_experiment_config
 
 
 class ExperimentConfigTest(unittest.TestCase):
