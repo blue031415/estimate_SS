@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 
 from ex3 import DEFAULT_CONFIG
+from ex4 import DEFAULT_CONFIG as EX4_DEFAULT_CONFIG
+from ex5 import DEFAULT_CONFIG as EX5_DEFAULT_CONFIG
 from experiments.config import load_experiment_config
 
 
@@ -29,6 +31,28 @@ class ExperimentConfigTest(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "unknown_key"):
             load_experiment_config(defaults, Path("tests/fixtures/unknown_key.yaml"))
+
+    def test_ex4_video_and_model_paths_are_resolved_from_yaml_directory(self):
+        config = load_experiment_config(EX4_DEFAULT_CONFIG, Path("configs/ex4.yaml"))
+
+        project_root = Path.cwd().resolve()
+        self.assertEqual(
+            config["input_videos"]["s1_seq1_cam0"],
+            project_root / "data/mpi_inf_3dhp/S1/Seq1/imageSequence/video_0.avi",
+        )
+        self.assertEqual(config["model_path"], project_root / "data/models/pose_landmarker_lite.task")
+        self.assertEqual(config["output_dir"], project_root / "out/ex4")
+        self.assertEqual(config["estimator"], "mediapipe")
+
+    def test_ex5_gahu_paths_are_resolved_from_yaml_directory(self):
+        config = load_experiment_config(EX5_DEFAULT_CONFIG, Path("configs/ex5.yaml"))
+
+        project_root = Path.cwd().resolve()
+        self.assertEqual(config["input_path"], project_root / "data/GaHu-Video/S001.avi")
+        self.assertEqual(config["model_path"], project_root / "data/models/pose_landmarker_lite.task")
+        self.assertEqual(config["npz_path"], project_root / "out/ex5/S001.npz")
+        self.assertEqual(config["gif_path"], project_root / "out/ex5/S001.gif")
+        self.assertEqual(config["estimator"], "mediapipe")
 
 
 if __name__ == "__main__":
