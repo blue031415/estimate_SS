@@ -1,0 +1,4 @@
+data_path: ../data/07_01.c3d
+output_path: ../out/ex2/07_01_first_origin.gif
+frame_interval: 5
+

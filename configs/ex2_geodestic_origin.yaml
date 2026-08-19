@@ -1,0 +1,6 @@
+data_path: ../data/07_01.c3d
+output_path_along: ../out/ex2/07_01_along_geodestic_origin.gif
+output_path_orth: ../out/ex2/07_01_orth_geodestic_origin.gif
+output_path: ../out/ex2/07_01_geodestic_origin.gif
+frame_interval: 5
+

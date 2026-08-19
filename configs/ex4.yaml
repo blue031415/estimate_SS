@@ -1,0 +1,22 @@
+# Settings consumed directly by src/ex4.py. Paths are relative to this file.
+input_videos:
+  s1_seq1_cam0: ../data/mpi_inf_3dhp/S1/Seq1/imageSequence/video_0.avi
+  s1_seq2_cam0: ../data/mpi_inf_3dhp/S1/Seq2/imageSequence/video_0.avi
+  s2_seq1_cam0: ../data/mpi_inf_3dhp/S2/Seq1/imageSequence/video_0.avi
+
+model_path: ../data/models/pose_landmarker_lite.task
+estimator: mediapipe
+mmpose_pose3d_model: human3d
+mmpose_pose3d_weights: null
+mmpose_detector: null
+mmpose_device: cpu
+mmpose_max_input_size: 1024
+output_dir: ../out/ex4
+frame_stride: 5
+max_frames: 60
+gif_fps: 10
+panel_size: 512
+min_detection_confidence: 0.5
+min_presence_confidence: 0.5
+min_tracking_confidence: 0.5
+display_visibility_threshold: 0.5

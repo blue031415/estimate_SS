@@ -1,117 +1,84 @@
+"""Experiment 3: second-order differences after injecting marker noise."""
+
 from pathlib import Path
 
-import numpy as np
-from scipy.linalg import eigh
-
-from subspace.utils import (
-    cal_magnitude,
-    gen_shape_difference_subspace,
-    gen_shape_principal_com_subspace,
-    gen_shape_subspace,
-    orthonormal_basis,
+from experiments.common_subspace import (
+    average_projection_matrix,
+    build_shape_subspaces,
+    eigendecompose_descending,
+    project_to_common_subspace,
+    select_eigen_indices,
 )
+from experiments.config import load_experiment_config, parse_config_path
+from experiments.dissimilarity import calculate_second_order_difference_DS
+from experiments.noise import add_noise_to_markers, marker_indices
 from utils.display import display_motion_score_contribution
-from utils.readc3d import read_c3d
-from utils.gen_noise import gen_noise
+from utils.c3d import read_c3d
 
-DATA_PATH = Path("data") / "07_01.c3d"
-Dim = 5
-OUTPUT_PATH = Path("out") / "ex3" / f"07_01_second_d{Dim}.gif"
-FRAME_INTERVAL = 5
-CONTRIBUTION_THRESHOLD = 0.999
-mean = np.array([0.0, 0.0, 0.0])
-cov = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-
-
-def select_eigen_indices(eigen_values, threshold=0.95):
-    contribution_ratio = eigen_values / np.sum(eigen_values)
-    cumulative_ratio = np.cumsum(contribution_ratio)
-    dim = np.searchsorted(cumulative_ratio, threshold) + 1
-    return np.arange(dim), contribution_ratio, cumulative_ratio
-
-
-def build_shape_subspaces(data):
-    return [gen_shape_subspace(data[:, :, frame]) for frame in range(data.shape[2])]
+DEFAULT_CONFIG = {
+    "data_path": Path("data") / "07_01.c3d",
+    "dimension": 5,
+    "output_path": Path("out") / "ex3" / "07_01_second_d5.gif",
+    "frame_interval": 5,
+    "contribution_threshold": 0.999,
+    "noise": {
+        "start_frame": 200,
+        "end_frame": 250,
+        "scale": 10,
+        "body_parts": ["left_arm"],
+        "mean": [0.0, 0.0, 0.0],
+        "covariance": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    },
+}
 
 
-def average_projection_matrix(subspaces):
-    projection_sum = np.zeros((subspaces[0].shape[0], subspaces[0].shape[0]))
+def main(config_path=None):
+    config = load_experiment_config(DEFAULT_CONFIG, config_path)
+    data_path = config["data_path"]
+    output_path = config["output_path"]
+    dimension = config["dimension"]
+    frame_interval = config["frame_interval"]
+    noise = config["noise"]
 
-    for subspace in subspaces:
-        projection_sum += subspace @ subspace.T
+    # 1. Read the data and inject the configured marker noise.
+    print(f"Dimention of common subspace: {dimension}")
+    data, labels = read_c3d(str(data_path), return_labels=True)
+    print(f"frame num: {data.shape[0]}")
+    noise_indices = marker_indices(labels, noise["body_parts"])
+    print(f"noise body parts: {noise['body_parts']}")
+    print(f"noise markers: {[labels[index] for index in noise_indices]}")
+    noisy_data = add_noise_to_markers(
+        data,
+        noise_indices,
+        noise["start_frame"],
+        noise["end_frame"],
+        noise["scale"],
+        noise["mean"],
+        noise["covariance"],
+    )
 
-    return projection_sum / len(subspaces)
-
-
-def eigendecompose_descending(matrix):
-    eigen_values, eigen_vectors = eigh(matrix)
-    return eigen_values[::-1], eigen_vectors[:, ::-1]
-
-
-def project_to_common_subspace(shape_subspaces, common_subspace):
-    return [
-        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace)) for shape_subspace in shape_subspaces
-    ]
-
-
-def contribution_by_marker(difference_subspace, S):
-    projected = difference_subspace @ (difference_subspace.T @ S)
-    basis = orthonormal_basis(projected)
-    return np.sum(np.square(basis), axis=1)
-
-
-def calculate_second_order_difference_DS(subspaces, frame_interval):
-    magnitudes = []
-    contributions = []
-
-    for frame in range(frame_interval, len(subspaces) - frame_interval):
-        S1 = subspaces[frame - frame_interval]
-        S2 = subspaces[frame]
-        S3 = subspaces[frame + frame_interval]
-
-        M = gen_shape_principal_com_subspace(S1, S3)
-
-        difference_subspace = gen_shape_difference_subspace(S2, M)
-
-        magnitudes.append(cal_magnitude(M, S2))
-        contributions.append(contribution_by_marker(difference_subspace, S2))
-
-    return magnitudes, contributions
-
-
-def main():
-    print(f"Dimention of common subspace: {Dim}")
-    data = read_c3d(str(DATA_PATH))
-    print(f"frame num: {data.shape[2]}")
-    print(data.shape)
-
-    # print(type(data))
-    # noiseの付加
-    noisy_data = np.asarray([data[:, :, frame] + gen_noise(mean, cov, data.shape[0]) for frame in range(data.shape[2])])
-    noisy_data = noisy_data.transpose((1, 2, 0))
-    print(noisy_data.shape)
+    # 2. Build and apply the common subspace.
     shape_subspaces = build_shape_subspaces(noisy_data)
     projection_matrix = average_projection_matrix(shape_subspaces)
     eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
-
-    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=CONTRIBUTION_THRESHOLD)
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=config["contribution_threshold"])
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
-
-    common_subspace = eigen_vectors[:, indices[:Dim]]
+    common_subspace = eigen_vectors[:, indices[:dimension]]
     projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
-    magnitudes, contributions = calculate_second_order_difference_DS(projected_subspaces, FRAME_INTERVAL)
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # 3. Calculate and render the second-order difference.
+    magnitudes, contributions = calculate_second_order_difference_DS(projected_subspaces, frame_interval)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     display_motion_score_contribution(
-        data,
-        range(FRAME_INTERVAL, len(projected_subspaces) - FRAME_INTERVAL),
+        noisy_data,
+        range(frame_interval, len(projected_subspaces) - frame_interval),
         magnitudes,
         contributions,
-        str(OUTPUT_PATH),
-        title=DATA_PATH.name,
+        str(output_path),
+        title=data_path.name,
     )
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_config_path(__doc__))

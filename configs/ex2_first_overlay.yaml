@@ -1,0 +1,6 @@
+data_path: ../data/07_01.c3d
+dimensions: [4, 5, 6]
+output_path: ../out/ex2/07_01_first_d_456.gif
+frame_interval: 5
+contribution_threshold: 0.999
+

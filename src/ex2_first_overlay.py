@@ -1,115 +1,63 @@
+"""Compare first-order differences before and after common-subspace projection."""
+
 from pathlib import Path
 
-import numpy as np
-from scipy.linalg import eigh
-
-from subspace.utils import (
-    cal_magnitude,
-    gen_shape_difference_subspace,
-    gen_shape_subspace,
-    orthonormal_basis,
+from experiments.common_subspace import (
+    average_projection_matrix,
+    build_shape_subspaces,
+    eigendecompose_descending,
+    project_to_common_subspace,
+    select_eigen_indices,
 )
+from experiments.config import load_experiment_config, parse_config_path
+from experiments.dissimilarity import calculate_difference_scores
 from utils.display import display_motion_some_score
-from utils.readc3d import read_c3d
+from utils.c3d import read_c3d
 
-DATA_PATH = Path("data") / "07_01.c3d"
-DIM_LIST = [4, 5, 6]
-OUTPUT_PATH = Path("out") / "ex2" / "07_01_first_d_456.gif"
-FRAME_INTERVAL = 5
-CONTRIBUTION_THRESHOLD = 0.999
-
-
-def select_eigen_indices(eigen_values, threshold=0.95):
-    contribution_ratio = eigen_values / np.sum(eigen_values)
-    cumulative_ratio = np.cumsum(contribution_ratio)
-    dim = np.searchsorted(cumulative_ratio, threshold) + 1
-    return np.arange(dim), contribution_ratio, cumulative_ratio
+DEFAULT_CONFIG = {
+    "data_path": Path("data") / "07_01.c3d",
+    "dimensions": [4, 5, 6],
+    "output_path": Path("out") / "ex2" / "07_01_first_d_456.gif",
+    "frame_interval": 5,
+    "contribution_threshold": 0.999,
+}
 
 
-def build_shape_subspaces(data):
-    return [gen_shape_subspace(data[:, :, frame]) for frame in range(data.shape[2])]
+def main(config_path=None):
+    config = load_experiment_config(DEFAULT_CONFIG, config_path)
+    data_path = config["data_path"]
+    output_path = config["output_path"]
+    frame_interval = config["frame_interval"]
 
-
-def average_projection_matrix(subspaces):
-    projection_sum = np.zeros((subspaces[0].shape[0], subspaces[0].shape[0]))
-
-    for subspace in subspaces:
-        projection_sum += subspace @ subspace.T
-
-    return projection_sum / len(subspaces)
-
-
-def eigendecompose_descending(matrix):
-    eigen_values, eigen_vectors = eigh(matrix)
-    return eigen_values[::-1], eigen_vectors[:, ::-1]
-
-
-def project_to_common_subspace(shape_subspaces, common_subspace):
-    return [
-        orthonormal_basis(common_subspace @ (common_subspace.T @ shape_subspace)) for shape_subspace in shape_subspaces
-    ]
-
-
-def contribution_by_marker(difference_subspace, S1):
-    projected = difference_subspace @ (difference_subspace.T @ S1)
-    basis = orthonormal_basis(projected)
-    return np.sum(np.square(basis), axis=1)
-
-
-def calculate_difference_scores(subspaces, frame_interval):
-    magnitudes = []
-    contributions = []
-
-    for frame in range(len(subspaces) - frame_interval):
-        S1 = subspaces[frame]
-        S2 = subspaces[frame + frame_interval]
-        difference_subspace = gen_shape_difference_subspace(S1, S2)
-
-        magnitudes.append(cal_magnitude(S1, S2))
-        contributions.append(contribution_by_marker(difference_subspace, S1))
-
-    return magnitudes, contributions
-
-
-def main():
-    data = read_c3d(str(DATA_PATH))
-    print(f"frame num: {data.shape[2]}")
-
+    # Establish the common-subspace candidates shared by every comparison.
+    data = read_c3d(str(data_path))
+    print(f"frame num: {data.shape[0]}")
     shape_subspaces = build_shape_subspaces(data)
     projection_matrix = average_projection_matrix(shape_subspaces)
     eigen_values, eigen_vectors = eigendecompose_descending(projection_matrix)
-
-    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=CONTRIBUTION_THRESHOLD)
+    indices, _, cumulative_ratio = select_eigen_indices(eigen_values, threshold=config["contribution_threshold"])
     print(f"selected indices: {indices}")
     print(f"cumulative contribution: {cumulative_ratio[indices[-1]]}")
 
-    magnitudes_list = {}
-    contributions_list = {}
-
-    # 射影前の差分部分空間の大きさ計算
-    magnitudes_origin, contributions_origin = calculate_difference_scores(shape_subspaces, FRAME_INTERVAL)
-
-    magnitudes_list.update({"origin": magnitudes_origin})
-    contributions_list.update({"origin": contributions_origin})
-
-    for dim in DIM_LIST:
-        common_subspace = eigen_vectors[:, indices[:dim]]
+    # Compare the original score with every configured projection dimension.
+    magnitudes_origin, _ = calculate_difference_scores(shape_subspaces, frame_interval)
+    magnitudes_list = {"origin": magnitudes_origin}
+    for dimension in config["dimensions"]:
+        common_subspace = eigen_vectors[:, indices[:dimension]]
         projected_subspaces = project_to_common_subspace(shape_subspaces, common_subspace)
-        magnitudes, contributions = calculate_difference_scores(projected_subspaces, FRAME_INTERVAL)
-        magnitudes_list.update({f"D = {dim}": magnitudes})
-        contributions_list.update({f"D = {dim}": contributions})
+        magnitudes, _ = calculate_difference_scores(projected_subspaces, frame_interval)
+        magnitudes_list[f"D = {dimension}"] = magnitudes
 
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     display_motion_some_score(
         data,
-        range(len(projected_subspaces) - FRAME_INTERVAL),
+        range(len(shape_subspaces) - frame_interval),
         list(magnitudes_list.values()),
         list(magnitudes_list.keys()),
-        str(OUTPUT_PATH),
-        title=DATA_PATH.name,
+        str(output_path),
+        title=data_path.name,
     )
 
 
 if __name__ == "__main__":
-    main()
+    main(parse_config_path(__doc__))

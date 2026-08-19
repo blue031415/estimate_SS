@@ -1,4 +1,16 @@
 # Shape Subspaceのノイズ耐性の検証
+
+## 実行方法
+
+各実験は対応する `ex*.py` に YAML を直接渡して実行します。
+
+```powershell
+uv run python src/ex3.py configs/ex3.yaml
+```
+
+YAML を省略すると従来の設定値で実行します。設定項目と全スクリプトの対応は
+[`docs/experiments.md`](docs/experiments.md) を参照してください。
+
 ## ex. 1 固有空間への射影
 ### 目的
 歩行空間の固有空間の次元を調べる。
