@@ -1,0 +1,9 @@
+# Numerical analysis only; no video decoding or pose estimation is performed.
+input_dir: ../out/ex6
+npz_pattern: "*.npz"
+output_dir: ../out/ex6
+first_dimension: 4
+second_dimension: 4
+geodestic_dimension: 4
+frame_interval: 3
+contribution_threshold: 0.999

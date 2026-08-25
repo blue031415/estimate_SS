@@ -1,0 +1,5 @@
+# Settings consumed directly by src/ex7.py. Paths are relative to this file.
+input_dir: ../out/ex6
+npz_pattern: "*.npz"
+output_dir: ../out/ex7
+contribution_threshold: 0.999

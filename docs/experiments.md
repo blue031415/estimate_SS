@@ -44,6 +44,9 @@ src/ex3_second.py            <-> configs/ex3_second.yaml
 src/ex3_geodestic.py         <-> configs/ex3_geodestic.yaml
 src/ex4.py                   <-> configs/ex4.yaml
 src/ex5.py                   <-> configs/ex5.yaml
+src/ex6.py                   <-> configs/ex6.yaml
+src/ex6_analysis.py          <-> configs/ex6_analysis.yaml
+src/ex7.py                   <-> configs/ex7.yaml
 ```
 
 ## Experiment 4: MPI-INF-3DHP video pose estimation
@@ -119,6 +122,55 @@ uv run python src/ex5.py configs/ex5.yaml
 The outputs are `out/ex5/S001.npz` and `out/ex5/S001.gif`. Set `max_frames` in
 `configs/ex5.yaml` to an integer for a shorter trial, or leave it as `null` to
 process through the end of the source video.
+
+## Experiment 6: self-video pose estimation and Experiment 2 analyses
+
+`src/ex6.py` processes every video matching `video_pattern` under
+`data/self_videos` in filename order. For each video it performs 3D skeleton
+estimation, saves the frame-aligned estimate to `out/ex6/<video-name>.npz`, and
+creates `out/ex6/<video-name>_pose.gif` for visual confirmation. Failed pose
+detections remain as NaN frames in the NPZ.
+
+The fully detected frames from that NPZ are then passed through the same common
+subspace projection, first-order difference, second-order difference, and
+geodestic decomposition functions used by the Experiment 2 scripts. Their GIFs
+are written beside the NPZ using `_first_origin`, `_second_origin`, and
+`_geodestic_origin` variants for analyses without common-subspace projection,
+plus `_first_d4`, `_second_d5`,
+`_along_geodestic_d5`, `_orth_geodestic_d5`, and `_geodestic_d5` suffixes.
+
+```powershell
+uv run python src/ex6.py configs/ex6.yaml
+```
+
+The default samples every third source frame. `frame_interval` is measured in
+these sampled, successfully detected frames. Set `max_frames` for a short trial;
+leave it as `null` to process all four videos. Existing videos and Experiment 2
+outputs are only read and are never overwritten.
+
+To repeat only the numerical analysis with different common-subspace
+dimensions, edit `first_dimension`, `second_dimension`, and
+`geodestic_dimension` in `configs/ex6_analysis.yaml`, then run:
+
+```powershell
+uv run python src/ex6_analysis.py configs/ex6_analysis.yaml
+```
+
+This command reads the existing `out/ex6/*.npz` files and does not decode video
+or run pose estimation. Output filenames include each configured dimension, so
+results from different dimensions can coexist. Reusing the same dimensions
+replaces only the corresponding analysis GIFs.
+
+## Experiment 7: eigenvalues from Experiment 6 estimates
+
+`src/ex7.py` loads every Experiment 6 NPZ, removes only frames containing an
+incomplete pose detection, and applies the same common-subspace eigenvalue and
+projection-error evaluation used by Experiment 1. It writes one graph per input
+to `out/ex7/<video-name>_eigen_val.png` without modifying the NPZ files.
+
+```powershell
+uv run python src/ex7.py configs/ex7.yaml
+```
 
 共通モジュールは次の役割に限定しています。
 
