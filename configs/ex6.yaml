@@ -20,5 +20,5 @@ display_visibility_threshold: 0.5
 first_dimension: 6
 second_dimension: 6
 geodestic_dimension: 6
-frame_interval: 5
+frame_interval: 3
 contribution_threshold: 0.999

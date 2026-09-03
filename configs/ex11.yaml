@@ -1,0 +1,8 @@
+# Difference analysis using a common subspace estimated from clean C3D data.
+c3d_path: ../data/07_01.c3d
+input_dir: ../out/ex6
+npz_pattern: "*.npz"
+output_dir: ../out/ex11
+dimension: [4, 5]
+frame_interval: 2
+contribution_threshold: 0.999

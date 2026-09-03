@@ -97,8 +97,9 @@ class Ex6FlowTest(unittest.TestCase):
         self.assertEqual(display_contribution.call_count, 8)
         self.assertEqual(
             Path(display_contribution.call_args_list[0].args[4]),
-            Path("out/ex6/video_first_origin.gif"),
+            Path("out/ex6/origin/fi3/video_first_origin_fi3.gif"),
         )
+        self.assertIn("frame interval=3", display_contribution.call_args_list[0].kwargs["title"])
         self.assertEqual(display_some_score.call_count, 2)
 
 

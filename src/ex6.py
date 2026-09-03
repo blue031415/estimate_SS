@@ -49,7 +49,7 @@ DEFAULT_CONFIG = {
     "first_dimension": 4,
     "second_dimension": 5,
     "geodestic_dimension": 5,
-    "frame_interval": 5,
+    "frame_interval": 3,
     "contribution_threshold": 0.999,
 }
 
@@ -149,6 +149,10 @@ def _upright_landmarks(world_landmarks):
 
 def _run_ex2_analyses(data, output_dir, output_stem, config, title):
     frame_interval = config["frame_interval"]
+    interval_tag = f"fi{frame_interval}"
+    plot_title = f"{title}, frame interval={frame_interval}"
+    origin_output_dir = output_dir / "origin" / interval_tag
+    origin_output_dir.mkdir(parents=True, exist_ok=True)
     if len(data) <= 2 * frame_interval:
         raise ValueError(
             f"At least {2 * frame_interval + 1} fully detected frames are required; got {len(data)}"
@@ -162,8 +166,8 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         range(len(shape_subspaces) - frame_interval),
         magnitudes,
         contributions,
-        str(output_dir / f"{output_stem}_first_origin.gif"),
-        title=title,
+        str(origin_output_dir / f"{output_stem}_first_origin_{interval_tag}.gif"),
+        title=plot_title,
     )
 
     # Repeat ex2_second_origin.py on the original shape subspaces.
@@ -174,8 +178,8 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         origin_analysis_frames,
         magnitudes,
         contributions,
-        str(output_dir / f"{output_stem}_second_origin.gif"),
-        title=title,
+        str(origin_output_dir / f"{output_stem}_second_origin_{interval_tag}.gif"),
+        title=plot_title,
     )
 
     # Repeat ex2_geodestic_origin.py on the original shape subspaces.
@@ -187,87 +191,92 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         origin_analysis_frames,
         magnitudes_along,
         contributions_along,
-        str(output_dir / f"{output_stem}_along_geodestic_origin.gif"),
-        title=title,
+        str(origin_output_dir / f"{output_stem}_along_geodestic_origin_{interval_tag}.gif"),
+        title=plot_title,
     )
     display_motion_score_contribution(
         data,
         origin_analysis_frames,
         magnitudes_orth,
         contributions_orth,
-        str(output_dir / f"{output_stem}_orth_geodestic_origin.gif"),
-        title=title,
+        str(origin_output_dir / f"{output_stem}_orth_geodestic_origin_{interval_tag}.gif"),
+        title=plot_title,
     )
     display_motion_some_score(
         data,
         origin_analysis_frames,
         [magnitudes_along, magnitudes_orth],
-        ["along geodesic(origin)", "orth to geodesic(origin)"],
-        str(output_dir / f"{output_stem}_geodestic_origin.gif"),
-        title=title,
+        [
+            f"along geodesic(origin, interval={frame_interval})",
+            f"orth to geodesic(origin, interval={frame_interval})",
+        ],
+        str(origin_output_dir / f"{output_stem}_geodestic_origin_{interval_tag}.gif"),
+        title=plot_title,
     )
 
     # Repeat ex2_first.py with the pose landmarks loaded from the generated NPZ.
-    dimension = config["first_dimension"]
-    print(f"Dimention of first-order common subspace: {dimension}")
-    projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
-    magnitudes, contributions = calculate_difference_scores(projected, frame_interval)
-    display_motion_score_contribution(
-        data,
-        range(len(projected) - frame_interval),
-        magnitudes,
-        contributions,
-        str(output_dir / f"{output_stem}_first_d{dimension}.gif"),
-        title=title,
-    )
+    first_dimensions = config["first_dimension"]
+    if isinstance(first_dimensions, int):
+        first_dimensions = [first_dimensions]
+    for dimension in first_dimensions:
+        dimension_output_dir = output_dir / f"d{dimension}" / interval_tag
+        dimension_output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Dimention of first-order common subspace: {dimension}")
+        projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
+        magnitudes, contributions = calculate_difference_scores(projected, frame_interval)
+        display_motion_score_contribution(
+            data, range(len(projected) - frame_interval), magnitudes, contributions,
+            str(dimension_output_dir / f"{output_stem}_first_d{dimension}_{interval_tag}.gif"),
+            title=plot_title,
+        )
 
     # Repeat ex2_second.py.
-    dimension = config["second_dimension"]
-    print(f"Dimention of second-order common subspace: {dimension}")
-    projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
-    magnitudes, contributions = calculate_second_order_difference_DS(projected, frame_interval)
-    analysis_frames = range(frame_interval, len(projected) - frame_interval)
-    display_motion_score_contribution(
-        data,
-        analysis_frames,
-        magnitudes,
-        contributions,
-        str(output_dir / f"{output_stem}_second_d{dimension}.gif"),
-        title=title,
-    )
+    second_dimensions = config["second_dimension"]
+    if isinstance(second_dimensions, int):
+        second_dimensions = [second_dimensions]
+    for dimension in second_dimensions:
+        dimension_output_dir = output_dir / f"d{dimension}" / interval_tag
+        dimension_output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Dimention of second-order common subspace: {dimension}")
+        projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
+        magnitudes, contributions = calculate_second_order_difference_DS(projected, frame_interval)
+        analysis_frames = range(frame_interval, len(projected) - frame_interval)
+        display_motion_score_contribution(
+            data, analysis_frames, magnitudes, contributions,
+            str(dimension_output_dir / f"{output_stem}_second_d{dimension}_{interval_tag}.gif"),
+            title=plot_title,
+        )
 
     # Repeat ex2_geodestic.py, preserving its public/output spelling.
-    dimension = config["geodestic_dimension"]
-    print(f"Dimention of geodestic common subspace: {dimension}")
-    projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
-    magnitudes_along, contributions_along, magnitudes_orth, contributions_orth = calculate_geodestic(
-        projected, frame_interval
-    )
-    analysis_frames = range(frame_interval, len(projected) - frame_interval)
-    display_motion_score_contribution(
-        data,
-        analysis_frames,
-        magnitudes_along,
-        contributions_along,
-        str(output_dir / f"{output_stem}_along_geodestic_d{dimension}.gif"),
-        title=title,
-    )
-    display_motion_score_contribution(
-        data,
-        analysis_frames,
-        magnitudes_orth,
-        contributions_orth,
-        str(output_dir / f"{output_stem}_orth_geodestic_d{dimension}.gif"),
-        title=title,
-    )
-    display_motion_some_score(
-        data,
-        analysis_frames,
-        [magnitudes_along, magnitudes_orth],
-        [f"along geodesic(D={dimension})", f"orth to geodesic(D={dimension})"],
-        str(output_dir / f"{output_stem}_geodestic_d{dimension}.gif"),
-        title=title,
-    )
+    geodestic_dimensions = config["geodestic_dimension"]
+    if isinstance(geodestic_dimensions, int):
+        geodestic_dimensions = [geodestic_dimensions]
+    for dimension in geodestic_dimensions:
+        dimension_output_dir = output_dir / f"d{dimension}" / interval_tag
+        dimension_output_dir.mkdir(parents=True, exist_ok=True)
+        print(f"Dimention of geodestic common subspace: {dimension}")
+        projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
+        magnitudes_along, contributions_along, magnitudes_orth, contributions_orth = calculate_geodestic(
+            projected, frame_interval
+        )
+        analysis_frames = range(frame_interval, len(projected) - frame_interval)
+        display_motion_score_contribution(
+            data, analysis_frames, magnitudes_along, contributions_along,
+            str(dimension_output_dir / f"{output_stem}_along_geodestic_d{dimension}_{interval_tag}.gif"),
+            title=plot_title,
+        )
+        display_motion_score_contribution(
+            data, analysis_frames, magnitudes_orth, contributions_orth,
+            str(dimension_output_dir / f"{output_stem}_orth_geodestic_d{dimension}_{interval_tag}.gif"),
+            title=plot_title,
+        )
+        display_motion_some_score(
+            data, analysis_frames, [magnitudes_along, magnitudes_orth],
+            [f"along geodesic(D={dimension}, interval={frame_interval})",
+             f"orth to geodesic(D={dimension}, interval={frame_interval})"],
+            str(dimension_output_dir / f"{output_stem}_geodestic_d{dimension}_{interval_tag}.gif"),
+            title=plot_title,
+        )
 
 
 def main(config_path=None):

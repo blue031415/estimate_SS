@@ -19,7 +19,7 @@ DEFAULT_CONFIG = {
     "first_dimension": 4,
     "second_dimension": 5,
     "geodestic_dimension": 5,
-    "frame_interval": 5,
+    "frame_interval": 3,
     "contribution_threshold": 0.999,
 }
 

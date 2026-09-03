@@ -2,8 +2,8 @@
 input_dir: ../out/ex6
 npz_pattern: "*.npz"
 output_dir: ../out/ex6
-first_dimension: 4
-second_dimension: 4
-geodestic_dimension: 4
-frame_interval: 3
+first_dimension: [4, 5]
+second_dimension: [4, 5]
+geodestic_dimension: [4, 5]
+frame_interval: 2
 contribution_threshold: 0.999

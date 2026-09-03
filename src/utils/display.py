@@ -279,3 +279,18 @@ def display_point(data, frame):
     ax.scatter(data[0, :], data[1, :], data[2, :], s=5)  # type: ignore
     ax.set_box_aspect([1, 1, 2])
     plt.show()
+
+
+def save_score_comparison(x, series, labels, save_path, title):
+    """Save a static comparison of already-calculated dissimilarity scores."""
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    for values, label in zip(series, labels):
+        ax.plot(x, values, label=label)
+    ax.set_xlabel("frame")
+    ax.set_ylabel("dissimilarity")
+    ax.set_title(title)
+    ax.grid(True)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(save_path)
+    plt.close(fig)

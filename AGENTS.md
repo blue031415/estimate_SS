@@ -1,5 +1,7 @@
 # Agent refactoring policy
 
+Operational repository map and experiment commands: `docs/agent-guide.md`.
+
 この文書はリポジトリ全体に適用する。エージェントは、リファクタリング・実験追加・
 設定変更を行う前にこの方針を確認すること。ユーザーから明示的に異なる指示がある場合は、
 その指示を優先する。

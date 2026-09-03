@@ -1,0 +1,15 @@
+data_path: ../data/07_01.c3d
+output_path: ../out/ex8/projected_coordinates.png
+dimension: 5
+frame_index: 200
+contribution_threshold: 0.999
+noise:
+  start_frame: 150
+  end_frame: 250
+  scale: 30
+  body_parts: [left_arm]
+  mean: [0.0, 0.0, 0.0]
+  covariance:
+    - [1.0, 0.0, 0.0]
+    - [0.0, 1.0, 0.0]
+    - [0.0, 0.0, 1.0]

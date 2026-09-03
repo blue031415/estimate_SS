@@ -1,0 +1,8 @@
+# Overlay ex6 (pose-derived) and ex11 (clean-C3D-derived) score graphs only.
+c3d_path: ../data/07_01.c3d
+input_dir: ../out/ex6
+npz_pattern: "*.npz"
+output_dir: ../out/ex12
+dimensions: [4, 5]
+frame_interval: 2
+contribution_threshold: 0.999

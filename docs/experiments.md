@@ -47,6 +47,10 @@ src/ex5.py                   <-> configs/ex5.yaml
 src/ex6.py                   <-> configs/ex6.yaml
 src/ex6_analysis.py          <-> configs/ex6_analysis.yaml
 src/ex7.py                   <-> configs/ex7.yaml
+src/ex8.py                   <-> configs/ex8.yaml
+src/ex9.py                   <-> configs/ex9.yaml
+src/ex10.py                  <-> configs/ex10.yaml
+src/ex11.py                  <-> configs/ex11.yaml
 ```
 
 ## Experiment 4: MPI-INF-3DHP video pose estimation
@@ -134,7 +138,7 @@ detections remain as NaN frames in the NPZ.
 The fully detected frames from that NPZ are then passed through the same common
 subspace projection, first-order difference, second-order difference, and
 geodestic decomposition functions used by the Experiment 2 scripts. Their GIFs
-are written beside the NPZ using `_first_origin`, `_second_origin`, and
+are written under `out/ex6/origin/fiN` and `out/ex6/dN/fiN` using `_first_origin`, `_second_origin`, and
 `_geodestic_origin` variants for analyses without common-subspace projection,
 plus `_first_d4`, `_second_d5`,
 `_along_geodestic_d5`, `_orth_geodestic_d5`, and `_geodestic_d5` suffixes.
@@ -147,10 +151,13 @@ The default samples every third source frame. `frame_interval` is measured in
 these sampled, successfully detected frames. Set `max_frames` for a short trial;
 leave it as `null` to process all four videos. Existing videos and Experiment 2
 outputs are only read and are never overwritten.
+Analysis GIF filenames and titles include `_fi<frame_interval>` so temporal
+interval trials can coexist. The current default interval is 3 sampled frames.
 
 To repeat only the numerical analysis with different common-subspace
 dimensions, edit `first_dimension`, `second_dimension`, and
-`geodestic_dimension` in `configs/ex6_analysis.yaml`, then run:
+`geodestic_dimension` in `configs/ex6_analysis.yaml`. Each accepts either one
+integer or a list of integers. Then run:
 
 ```powershell
 uv run python src/ex6_analysis.py configs/ex6_analysis.yaml
@@ -171,6 +178,75 @@ to `out/ex7/<video-name>_eigen_val.png` without modifying the NPZ files.
 ```powershell
 uv run python src/ex7.py configs/ex7.yaml
 ```
+
+## Experiments 8-10: projected coordinate plots
+
+Experiment 8 repeats Experiment 3's noise injection and common-subspace
+estimation, then projects the centered noisy marker coordinates with `U U^T`,
+restores the frame centroid, and plots the configured frame before and after
+projection.
+
+```powershell
+uv run python src/ex8.py configs/ex8.yaml
+```
+
+Experiment 9 performs the same coordinate projection independently for every
+Experiment 6 pose NPZ, without noise. One comparison PNG is written per video.
+
+```powershell
+uv run python src/ex9.py configs/ex9.yaml
+```
+
+Experiment 10 extracts 12 corresponding body points from C3D and MediaPipe:
+shoulders, elbows, wrists, hips, knees, and ankles. Paired C3D wrist markers and
+front/back waist markers are averaged for the wrist and hip positions. The
+common subspace is estimated only from the noisy C3D points, and the video pose
+coordinates are projected into that C3D-derived subspace.
+The unprojected 12 video joints are also saved as
+`out/ex10/video_original.png`, using the same configured frame as the projected
+comparison.
+
+```powershell
+uv run python src/ex10.py configs/ex10.yaml
+```
+
+Experiments 8-10 initially create static side-by-side 3D plots for one
+configured frame. `dimension` and `frame_index` can be changed in each matching
+YAML file. Existing C3D, NPZ, and prior experiment outputs are not modified.
+
+## Experiment 11: video differences in a clean-C3D subspace
+
+`src/ex11.py` extracts the same 12 corresponding joints used by Experiment 10,
+but estimates the common subspace from the original C3D without adding noise.
+Each video pose shape subspace is projected into that clean-C3D subspace before
+the Experiment 6 first-order, second-order, and geodestic analyses are run.
+
+```powershell
+uv run python src/ex11.py configs/ex11.yaml
+```
+
+GIFs are grouped under `out/ex11/origin/fiN` and
+`out/ex11/c3d/dN/fiN`. Five `_origin.gif` variants use
+the video shape subspaces without dimensional reduction. Five filenames contain
+`_c3d` and the configured dimension and use the clean-C3D projection, allowing
+the two conditions to be compared without overwriting Experiment 6 outputs.
+New outputs include `_fi<frame_interval>` in their filenames, titles, and
+geodestic legends so results from different temporal intervals can coexist.
+
+## Experiment 12: Experiment 6 and 11 score comparison
+
+`src/ex12.py` reuses the Experiment 6 pose-derived projection and the
+Experiment 11 clean-C3D-derived projection for matching dimensions and frame
+intervals. It recalculates the existing first-order, second-order, along-
+geodestic, and orthogonal-geodestic scores, then overlays only the two score
+graphs. It does not run pose estimation or modify prior outputs.
+
+```powershell
+uv run python src/ex12.py configs/ex12.yaml
+```
+
+PNG files are grouped under `out/ex12/dN/fiN` and retain `_dN_fiN` in their
+filenames.
 
 共通モジュールは次の役割に限定しています。
 
