@@ -19,11 +19,15 @@ from experiments.common_subspace import (  # noqa: E402
 )
 from experiments.config import load_experiment_config, parse_config_path  # noqa: E402
 from subspace import cal_magnitude  # noqa: E402
+from utils.plot_style import configure_matplotlib_font  # noqa: E402
+
+
+configure_matplotlib_font()
 
 
 DEFAULT_CONFIG = {
     "input_dir": Path("out/ex6"),
-    "npz_pattern": "*.npz",
+    "npz_pattern": "*/*.npz",
     "output_dir": Path("out/ex7"),
     "contribution_threshold": 0.999,
 }

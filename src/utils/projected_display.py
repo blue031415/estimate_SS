@@ -3,6 +3,11 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+from utils.plot_style import configure_matplotlib_font
+
+
+configure_matplotlib_font()
+
 
 def plot_coordinates(points, output_path, title):
     """Plot one unprojected 3D point frame."""

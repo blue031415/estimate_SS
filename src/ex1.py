@@ -15,6 +15,10 @@ from experiments.common_subspace import (
 from subspace import cal_magnitude
 from experiments.config import load_experiment_config, parse_config_path
 from utils.c3d import read_c3d
+from utils.plot_style import configure_matplotlib_font
+
+
+configure_matplotlib_font()
 
 DEFAULT_CONFIG = {
     "data_path": Path("data") / "07_01.c3d",

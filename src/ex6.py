@@ -46,6 +46,7 @@ DEFAULT_CONFIG = {
     "min_presence_confidence": 0.5,
     "min_tracking_confidence": 0.5,
     "display_visibility_threshold": 0.5,
+    "rotate_pose_90_degrees": False,
     "first_dimension": 4,
     "second_dimension": 5,
     "geodestic_dimension": 5,
@@ -151,7 +152,8 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
     frame_interval = config["frame_interval"]
     interval_tag = f"fi{frame_interval}"
     plot_title = f"{title}, frame interval={frame_interval}"
-    origin_output_dir = output_dir / "origin" / interval_tag
+    interval_output_dir = output_dir / interval_tag
+    origin_output_dir = interval_output_dir / "origin"
     origin_output_dir.mkdir(parents=True, exist_ok=True)
     if len(data) <= 2 * frame_interval:
         raise ValueError(
@@ -166,7 +168,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         range(len(shape_subspaces) - frame_interval),
         magnitudes,
         contributions,
-        str(origin_output_dir / f"{output_stem}_first_origin_{interval_tag}.gif"),
+        str(origin_output_dir / f"{output_stem}_first_origin.gif"),
         title=plot_title,
     )
 
@@ -178,7 +180,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         origin_analysis_frames,
         magnitudes,
         contributions,
-        str(origin_output_dir / f"{output_stem}_second_origin_{interval_tag}.gif"),
+        str(origin_output_dir / f"{output_stem}_second_origin.gif"),
         title=plot_title,
     )
 
@@ -191,7 +193,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         origin_analysis_frames,
         magnitudes_along,
         contributions_along,
-        str(origin_output_dir / f"{output_stem}_along_geodestic_origin_{interval_tag}.gif"),
+        str(origin_output_dir / f"{output_stem}_along_geodestic_origin.gif"),
         title=plot_title,
     )
     display_motion_score_contribution(
@@ -199,7 +201,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         origin_analysis_frames,
         magnitudes_orth,
         contributions_orth,
-        str(origin_output_dir / f"{output_stem}_orth_geodestic_origin_{interval_tag}.gif"),
+        str(origin_output_dir / f"{output_stem}_orth_geodestic_origin.gif"),
         title=plot_title,
     )
     display_motion_some_score(
@@ -210,7 +212,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
             f"along geodesic(origin, interval={frame_interval})",
             f"orth to geodesic(origin, interval={frame_interval})",
         ],
-        str(origin_output_dir / f"{output_stem}_geodestic_origin_{interval_tag}.gif"),
+        str(origin_output_dir / f"{output_stem}_geodestic_origin.gif"),
         title=plot_title,
     )
 
@@ -219,14 +221,14 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
     if isinstance(first_dimensions, int):
         first_dimensions = [first_dimensions]
     for dimension in first_dimensions:
-        dimension_output_dir = output_dir / f"d{dimension}" / interval_tag
+        dimension_output_dir = interval_output_dir / f"d{dimension}"
         dimension_output_dir.mkdir(parents=True, exist_ok=True)
         print(f"Dimention of first-order common subspace: {dimension}")
         projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
         magnitudes, contributions = calculate_difference_scores(projected, frame_interval)
         display_motion_score_contribution(
             data, range(len(projected) - frame_interval), magnitudes, contributions,
-            str(dimension_output_dir / f"{output_stem}_first_d{dimension}_{interval_tag}.gif"),
+            str(dimension_output_dir / f"{output_stem}_first.gif"),
             title=plot_title,
         )
 
@@ -235,7 +237,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
     if isinstance(second_dimensions, int):
         second_dimensions = [second_dimensions]
     for dimension in second_dimensions:
-        dimension_output_dir = output_dir / f"d{dimension}" / interval_tag
+        dimension_output_dir = interval_output_dir / f"d{dimension}"
         dimension_output_dir.mkdir(parents=True, exist_ok=True)
         print(f"Dimention of second-order common subspace: {dimension}")
         projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
@@ -243,7 +245,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         analysis_frames = range(frame_interval, len(projected) - frame_interval)
         display_motion_score_contribution(
             data, analysis_frames, magnitudes, contributions,
-            str(dimension_output_dir / f"{output_stem}_second_d{dimension}_{interval_tag}.gif"),
+            str(dimension_output_dir / f"{output_stem}_second.gif"),
             title=plot_title,
         )
 
@@ -252,7 +254,7 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
     if isinstance(geodestic_dimensions, int):
         geodestic_dimensions = [geodestic_dimensions]
     for dimension in geodestic_dimensions:
-        dimension_output_dir = output_dir / f"d{dimension}" / interval_tag
+        dimension_output_dir = interval_output_dir / f"d{dimension}"
         dimension_output_dir.mkdir(parents=True, exist_ok=True)
         print(f"Dimention of geodestic common subspace: {dimension}")
         projected = _projected_subspaces(data, dimension, config["contribution_threshold"])
@@ -262,19 +264,19 @@ def _run_ex2_analyses(data, output_dir, output_stem, config, title):
         analysis_frames = range(frame_interval, len(projected) - frame_interval)
         display_motion_score_contribution(
             data, analysis_frames, magnitudes_along, contributions_along,
-            str(dimension_output_dir / f"{output_stem}_along_geodestic_d{dimension}_{interval_tag}.gif"),
+            str(dimension_output_dir / f"{output_stem}_along_geodestic.gif"),
             title=plot_title,
         )
         display_motion_score_contribution(
             data, analysis_frames, magnitudes_orth, contributions_orth,
-            str(dimension_output_dir / f"{output_stem}_orth_geodestic_d{dimension}_{interval_tag}.gif"),
+            str(dimension_output_dir / f"{output_stem}_orth_geodestic.gif"),
             title=plot_title,
         )
         display_motion_some_score(
             data, analysis_frames, [magnitudes_along, magnitudes_orth],
             [f"along geodesic(D={dimension}, interval={frame_interval})",
              f"orth to geodesic(D={dimension}, interval={frame_interval})"],
-            str(dimension_output_dir / f"{output_stem}_geodestic_d{dimension}_{interval_tag}.gif"),
+            str(dimension_output_dir / f"{output_stem}_geodestic.gif"),
             title=plot_title,
         )
 
@@ -293,7 +295,9 @@ def main(config_path=None):
         result = _estimate_video(video_path, config)
         suffix = "" if config["estimator"] == "mediapipe" else "_mmpose"
         output_stem = f"{video_path.stem}{suffix}"
-        npz_path = output_dir / f"{output_stem}.npz"
+        video_output_dir = output_dir / output_stem
+        video_output_dir.mkdir(parents=True, exist_ok=True)
+        npz_path = video_output_dir / f"{output_stem}.npz"
         np.savez_compressed(
             npz_path,
             world_landmarks=result["world_landmarks"],
@@ -309,7 +313,9 @@ def main(config_path=None):
             estimator=result["estimator_name"],
         )
 
-        pose_gif_path = output_dir / f"{output_stem}_pose.gif"
+        rotation_degrees = 90 if config["rotate_pose_90_degrees"] else 0
+        rotation_suffix = "_rotated_90" if rotation_degrees else ""
+        pose_gif_path = video_output_dir / f"{output_stem}_pose{rotation_suffix}.gif"
         save_pose_comparison_gif(
             result["rgb_frames"],
             result["world_landmarks"],
@@ -320,6 +326,7 @@ def main(config_path=None):
             panel_size=config["panel_size"],
             visibility_threshold=config["display_visibility_threshold"],
             estimator_label=result["estimator_name"],
+            azimuth_rotation_degrees=rotation_degrees,
         )
 
         # Keep source alignment in NPZ, but exclude failed detections from SVD.
@@ -329,7 +336,15 @@ def main(config_path=None):
         print(f"detected {detected}/{len(valid_frames)} sampled frames")
         print(f"saved: {npz_path}")
         print(f"saved: {pose_gif_path}")
-        _run_ex2_analyses(data, output_dir, output_stem, config, video_path.name)
+        frame_intervals = config["frame_interval"]
+        if isinstance(frame_intervals, int):
+            frame_intervals = [frame_intervals]
+        for frame_interval in frame_intervals:
+            interval_config = dict(config)
+            interval_config["frame_interval"] = frame_interval
+            _run_ex2_analyses(
+                data, video_output_dir, output_stem, interval_config, video_path.name
+            )
 
 
 if __name__ == "__main__":

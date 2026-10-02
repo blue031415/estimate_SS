@@ -4,6 +4,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
 
+from utils.plot_style import configure_matplotlib_font
+
+
+configure_matplotlib_font()
+
 
 def save_pose_comparison_gif(
     rgb_frames,
@@ -15,6 +20,7 @@ def save_pose_comparison_gif(
     panel_size=512,
     visibility_threshold=0.5,
     estimator_label="3D pose",
+    azimuth_rotation_degrees=0,
 ):
     """Save source frames beside an upright, camera-relative 3D skeleton."""
     if not rgb_frames:
@@ -35,6 +41,7 @@ def save_pose_comparison_gif(
             visibility_threshold,
             index,
             estimator_label,
+            azimuth_rotation_degrees,
         )
         source_panel = _fit_source_panel(rgb_frame, panel_size)
         combined = Image.new("RGB", (panel_size * 2, panel_size), "white")
@@ -72,7 +79,15 @@ def _symmetric_axis_limit(world_landmarks):
 
 
 def _render_pose_panel(
-    points, visibility, connections, axis_limit, panel_size, threshold, frame_index, estimator_label
+    points,
+    visibility,
+    connections,
+    axis_limit,
+    panel_size,
+    threshold,
+    frame_index,
+    estimator_label,
+    azimuth_rotation_degrees=0,
 ):
     dpi = 100
     fig = plt.figure(figsize=(panel_size / dpi, panel_size / dpi), dpi=dpi)
@@ -98,7 +113,7 @@ def _render_pose_panel(
     ax.set_ylim(-axis_limit, axis_limit)
     ax.set_zlim(-axis_limit, axis_limit)
     ax.set_box_aspect((1, 1, 1))
-    ax.view_init(elev=15, azim=-70)
+    ax.view_init(elev=15, azim=-70 + azimuth_rotation_degrees)
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Depth (m)")
     ax.set_zlabel("Up (m)")

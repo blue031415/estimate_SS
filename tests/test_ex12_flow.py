@@ -1,4 +1,3 @@
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -13,13 +12,13 @@ class Ex12FlowTest(unittest.TestCase):
                    "orth_geodestic": [5.0]}
         scores11 = {"first": [1.5, 2.5], "second": [3.5], "along_geodestic": [4.5],
                     "orth_geodestic": [5.5]}
-        with tempfile.TemporaryDirectory() as directory:
-            ex12._save_comparisons(scores6, scores11, Path(directory), "motion", 4, 2)
+        output_dir = Path("out/test_ex12_flow")
+        ex12._save_comparisons(scores6, scores11, output_dir, "motion", 4, 2)
 
         self.assertEqual(save_graph.call_count, 5)
         self.assertEqual(list(save_graph.call_args_list[0].args[0]), [0, 1])
         self.assertEqual(list(save_graph.call_args_list[1].args[0]), [2])
-        self.assertTrue(str(save_graph.call_args_list[0].args[3]).endswith("_d4_fi2.png"))
+        self.assertTrue(str(save_graph.call_args_list[0].args[3]).endswith("_first.png"))
 
 
 if __name__ == "__main__":

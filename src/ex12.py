@@ -33,7 +33,7 @@ from utils.display import save_score_comparison  # noqa: E402
 DEFAULT_CONFIG = {
     "c3d_path": Path("data/07_01.c3d"),
     "input_dir": Path("out/ex6"),
-    "npz_pattern": "*.npz",
+    "npz_pattern": "*/*.npz",
     "output_dir": Path("out/ex12"),
     "dimensions": [4, 5],
     "frame_interval": 2,
@@ -56,7 +56,7 @@ def _save_comparisons(ex6_scores, ex11_scores, output_dir, stem, dimension, fram
             x,
             [ex6_scores[score_name], ex11_scores[score_name]],
             ["ex6: pose common subspace", "ex11: clean-C3D common subspace"],
-            output_dir / f"{stem}_{score_name}_d{dimension}_fi{frame_interval}.png",
+            output_dir / f"{stem}_{score_name}.png",
             f"{stem}: {score_name}, D={dimension}, frame interval={frame_interval}",
         )
     geodestic_x = range(frame_interval, frame_interval + len(ex6_scores["along_geodestic"]))
@@ -65,7 +65,7 @@ def _save_comparisons(ex6_scores, ex11_scores, output_dir, stem, dimension, fram
         [ex6_scores["along_geodestic"], ex6_scores["orth_geodestic"],
          ex11_scores["along_geodestic"], ex11_scores["orth_geodestic"]],
         ["ex6: along", "ex6: orthogonal", "ex11: along", "ex11: orthogonal"],
-        output_dir / f"{stem}_geodestic_d{dimension}_fi{frame_interval}.png",
+        output_dir / f"{stem}_geodestic.png",
         f"{stem}: geodestic components, D={dimension}, frame interval={frame_interval}",
     )
 
@@ -97,23 +97,31 @@ def main(config_path=None):
         ex11_data = upright_pose_coordinates(ex11_data)
         ex11_shape_subspaces = build_shape_subspaces(ex11_data)
 
-        # 3. Calculate the same four score series as ex6/ex11 and only overlay their graphs.
-        for dimension in config["dimensions"]:
-            ex6_projected = _projected_subspaces(
-                ex6_data, dimension, config["contribution_threshold"]
-            )
-            c3d_common_subspace = eigen_vectors[:, indices[:dimension]]
-            ex11_projected = project_to_common_subspace(ex11_shape_subspaces, c3d_common_subspace)
-            condition_dir = config["output_dir"] / f"d{dimension}" / f"fi{config['frame_interval']}"
-            condition_dir.mkdir(parents=True, exist_ok=True)
-            _save_comparisons(
-                _scores(ex6_projected, config["frame_interval"]),
-                _scores(ex11_projected, config["frame_interval"]),
-                condition_dir,
-                npz_path.stem,
-                dimension,
-                config["frame_interval"],
-            )
+        # 3. Calculate matching ex6/ex11 scores for every interval and dimension.
+        frame_intervals = config["frame_interval"]
+        if isinstance(frame_intervals, int):
+            frame_intervals = [frame_intervals]
+        for frame_interval in frame_intervals:
+            for dimension in config["dimensions"]:
+                ex6_projected = _projected_subspaces(
+                    ex6_data, dimension, config["contribution_threshold"]
+                )
+                c3d_common_subspace = eigen_vectors[:, indices[:dimension]]
+                ex11_projected = project_to_common_subspace(
+                    ex11_shape_subspaces, c3d_common_subspace
+                )
+                condition_dir = (
+                    config["output_dir"] / f"fi{frame_interval}" / f"d{dimension}"
+                )
+                condition_dir.mkdir(parents=True, exist_ok=True)
+                _save_comparisons(
+                    _scores(ex6_projected, frame_interval),
+                    _scores(ex11_projected, frame_interval),
+                    condition_dir,
+                    npz_path.stem,
+                    dimension,
+                    frame_interval,
+                )
 
 
 if __name__ == "__main__":

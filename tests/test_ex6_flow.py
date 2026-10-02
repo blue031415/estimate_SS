@@ -50,14 +50,17 @@ class Ex6FlowTest(unittest.TestCase):
         with patch("ex6.load_experiment_config", return_value=config):
             ex6.main("ignored.yaml")
 
-        video_count = len(list(input_dir.glob("*.mp4")))
+        video_count = len(list(input_dir.glob(config["video_pattern"])))
         self.assertEqual(estimate_video.call_count, video_count)
         self.assertEqual(save_gif.call_count, video_count)
+        for call in save_gif.call_args_list:
+            self.assertEqual(call.kwargs["azimuth_rotation_degrees"], 0)
+            self.assertTrue(str(call.args[4]).endswith("_pose.gif"))
         self.assertEqual(run_analyses.call_count, video_count)
         for call in run_analyses.call_args_list:
             self.assertEqual(call.args[0].shape, (frame_count - 1, landmark_count, 3))
-        for video_path in input_dir.glob("*.mp4"):
-            with np.load(output_dir / f"{video_path.stem}.npz") as data:
+        for video_path in input_dir.glob(config["video_pattern"]):
+            with np.load(output_dir / video_path.stem / f"{video_path.stem}.npz") as data:
                 self.assertEqual(data["world_landmarks"].shape, (frame_count, landmark_count, 3))
                 self.assertTrue(np.isnan(data["world_landmarks"][1]).all())
 
@@ -87,7 +90,9 @@ class Ex6FlowTest(unittest.TestCase):
             [np.ones(6)] * 2,
         )
 
-        ex6._run_ex2_analyses(data, Path("out/ex6"), "video", ex6.DEFAULT_CONFIG, "video.mp4")
+        ex6._run_ex2_analyses(
+            data, Path("out/ex6/video"), "video", ex6.DEFAULT_CONFIG, "video.mp4"
+        )
 
         self.assertEqual(projected_subspaces.call_count, 3)
         self.assertEqual(first_scores.call_count, 2)
@@ -97,9 +102,13 @@ class Ex6FlowTest(unittest.TestCase):
         self.assertEqual(display_contribution.call_count, 8)
         self.assertEqual(
             Path(display_contribution.call_args_list[0].args[4]),
-            Path("out/ex6/origin/fi3/video_first_origin_fi3.gif"),
+            Path("out/ex6/video/fi3/origin/video_first_origin.gif"),
         )
         self.assertIn("frame interval=3", display_contribution.call_args_list[0].kwargs["title"])
+        self.assertEqual(
+            Path(display_contribution.call_args_list[4].args[4]),
+            Path("out/ex6/video/fi3/d4/video_first.gif"),
+        )
         self.assertEqual(display_some_score.call_count, 2)
 
 

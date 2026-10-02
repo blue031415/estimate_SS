@@ -1,8 +1,8 @@
-# Overlay ex6 (pose-derived) and ex11 (clean-C3D-derived) score graphs only.
+# ex6（姿勢データ由来）とex11（クリーンなC3D由来）の評価値graphを重ねる。
 c3d_path: ../data/07_01.c3d
 input_dir: ../out/ex6
-npz_pattern: "*.npz"
+npz_pattern: "*/*.npz"
 output_dir: ../out/ex12
-dimensions: [4, 5]
-frame_interval: 2
+dimensions: [4, 5, 6]
+frame_interval: [2,3]
 contribution_threshold: 0.999

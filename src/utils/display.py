@@ -9,6 +9,10 @@ from matplotlib.animation import FuncAnimation
 
 # from scipy.linalg import eig
 from utils.c3d import remove_nan
+from utils.plot_style import configure_matplotlib_font
+
+
+configure_matplotlib_font()
 
 
 def _as_point_data(data):
@@ -117,6 +121,7 @@ def display_motion_score(data, x, y, save_path, title=None):
     ani = FuncAnimation(fig, update, frames=num_frame, interval=50, blit=False)
 
     ani.save(save_path, writer="pillow", fps=20)
+    plt.close(fig)
 
 
 def display_motion_score_contribution(data, x, y, contribution, save_path, title=None):
@@ -200,6 +205,7 @@ def display_motion_score_contribution(data, x, y, contribution, save_path, title
 
     # plt.show()
     ani.save(save_path, writer="pillow", fps=20)
+    plt.close(fig)
 
 
 # 複数の波形を表示する
@@ -269,6 +275,7 @@ def display_motion_some_score(data, x, y, y_label, save_path, title=None):
     plt.legend()
     # plt.show()
     ani.save(save_path, writer="pillow", fps=20)
+    plt.close(fig)
 
 
 def display_point(data, frame):

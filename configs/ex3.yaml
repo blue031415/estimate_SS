@@ -1,4 +1,4 @@
-# Settings consumed directly by src/ex3.py.
+# src/ex3.pyが直接読み込む設定。
 data_path: ../data/07_01.c3d
 output_path: ../out/ex3/eigen_val_noise.png
 contribution_threshold: 0.999

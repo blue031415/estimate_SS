@@ -1,5 +1,5 @@
 c3d_path: ../data/07_01.c3d
-pose_npz_path: ../out/ex6/歩行動作3.npz
+pose_npz_path: ../out/ex6/歩行動作3/歩行動作3.npz
 output_path: ../out/ex10/video_projected_to_c3d.png
 original_output_path: ../out/ex10/video_original.png
 dimension: 5

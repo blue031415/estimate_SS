@@ -14,7 +14,7 @@ from experiments.config import load_experiment_config, parse_config_path  # noqa
 
 DEFAULT_CONFIG = {
     "input_dir": Path("out/ex6"),
-    "npz_pattern": "*.npz",
+    "npz_pattern": "*/*.npz",
     "output_dir": Path("out/ex6"),
     "first_dimension": 4,
     "second_dimension": 5,
@@ -43,8 +43,17 @@ def main(config_path=None):
         data = _upright_landmarks(world_landmarks[valid_frames])
         print(f"[{npz_path.stem}] detected {len(data)}/{len(world_landmarks)} sampled frames")
 
-        # 3. Run first-order, second-order, and geodestic analyses without inference.
-        _run_ex2_analyses(data, output_dir, npz_path.stem, config, npz_path.name)
+        # 3. Run each configured frame interval without repeating pose inference.
+        frame_intervals = config["frame_interval"]
+        if isinstance(frame_intervals, int):
+            frame_intervals = [frame_intervals]
+        for frame_interval in frame_intervals:
+            interval_config = dict(config)
+            interval_config["frame_interval"] = frame_interval
+            video_output_dir = output_dir / npz_path.stem
+            _run_ex2_analyses(
+                data, video_output_dir, npz_path.stem, interval_config, npz_path.name
+            )
 
 
 if __name__ == "__main__":

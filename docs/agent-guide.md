@@ -70,7 +70,8 @@ src/ex*.py  ->  src/experiments  ->  src/subspace
   coordinate projection, and joint correspondence.
 - `src/subspace`: mathematical primitives. It must not depend on `experiments`
   or `utils`; consumers should import its public API from `subspace`.
-- `src/utils`: domain-independent I/O and visualization.
+- `src/utils`: domain-independent I/O and visualization. Japanese-capable
+  Matplotlib font selection is centralized in `utils/plot_style.py`.
 
 Do not add a generic experiment registry or runner that hides an experiment's
 flow. Batch execution belongs in `scripts/run_all.ps1`, which calls each
@@ -104,6 +105,7 @@ uv run python src/ex11.py configs/ex11.yaml
 | `ex5.py` | GaHu S001 video pose estimation |
 | `ex6.py` | Self-video pose estimation followed by ex2-style analysis |
 | `ex6_analysis.py` | Numerical ex6 analysis from saved NPZ, without inference |
+| `ex6_pose.py` | Pose comparison GIF redraw from saved ex6 NPZ, without inference |
 | `ex7.py` | Eigenvalue analysis of ex6 pose estimates |
 | `ex8.py` | 3D visualization of noisy C3D projection |
 | `ex9.py` | 3D visualization of video-pose projection |
@@ -115,7 +117,7 @@ uv run python src/ex11.py configs/ex11.yaml
 
 ```text
 self videos
-   -> ex6 inference -> out/ex6/*.npz
+   -> ex6 inference -> out/ex6/<video-name>/<video-name>.npz
                          |          |
                          |          +-> ex6_analysis -> pose-derived scores/GIFs
                          |
@@ -134,21 +136,25 @@ Current condition-oriented output layout:
 
 ```text
 out/ex6/
-  *.npz
-  origin/fiN/*.gif
-  dN/fiN/*.gif
+  <video-name>/
+    <video-name>.npz
+    <video-name>_pose.gif
+    fiN/origin/*.gif
+    fiN/dN/*.gif
 
 out/ex11/
-  origin/fiN/*.gif
-  c3d/dN/fiN/*.gif
+  <video-name>/
+    fiN/origin/*.gif
+    fiN/dN/*.gif
 
 out/ex12/
-  dN/fiN/*.png
+  fiN/dN/*.png
 ```
 
 `N` in `dN` is the common-subspace dimension; `N` in `fiN` is the frame
-interval. Filenames also retain `_dN_fiN`. Old files directly under experiment
-output directories are legacy results and must remain untouched.
+interval. Those conditions are encoded only by directories, not repeated in
+filenames. The video title is always the first directory level for ex6 and
+ex11 condition outputs.
 
 ex12 does not read graphs produced by ex6/ex11. It deliberately reuses their
 calculation functions for matching dimension/frame-interval conditions and

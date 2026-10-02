@@ -29,7 +29,7 @@ from utils.projected_display import plot_coordinates, plot_projected_coordinates
 
 DEFAULT_CONFIG = {
     "c3d_path": Path("data/07_01.c3d"),
-    "pose_npz_path": Path("out/ex6/歩行動作3.npz"),
+    "pose_npz_path": Path("out/ex6/歩行動作3/歩行動作3.npz"),
     "output_path": Path("out/ex10/video_projected_to_c3d.png"),
     "original_output_path": Path("out/ex10/video_original.png"),
     "dimension": 5,

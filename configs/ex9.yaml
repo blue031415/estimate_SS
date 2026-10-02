@@ -1,5 +1,5 @@
 input_dir: ../out/ex6
-npz_pattern: "*.npz"
+npz_pattern: "*/*.npz"
 output_dir: ../out/ex9
 dimension: 5
 frame_index: 60

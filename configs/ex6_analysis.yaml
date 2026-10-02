@@ -1,9 +1,9 @@
-# Numerical analysis only; no video decoding or pose estimation is performed.
+# 数値解析のみを行い、動画のdecodeと姿勢推定は実行しない。
 input_dir: ../out/ex6
-npz_pattern: "*.npz"
+npz_pattern: "歩行動画*/*.npz"
 output_dir: ../out/ex6
-first_dimension: [4, 5]
-second_dimension: [4, 5]
-geodestic_dimension: [4, 5]
-frame_interval: 2
+first_dimension: [4, 5, 6]
+second_dimension: [4, 5, 6]
+geodestic_dimension: [4, 5, 6]
+frame_interval: [2, 3]
 contribution_threshold: 0.999

@@ -1,0 +1,7 @@
+# 保存済みの実験6 NPZから姿勢比較GIFだけを再描画する。
+input_npz: ../out/ex6/歩行動画奥から手前２/歩行動画奥から手前２.npz
+output_path: ../out/ex6/歩行動画奥から手前２/歩行動画奥から手前２_pose_rotated_90.gif
+rotate_pose_90_degrees: true
+gif_fps: 10
+panel_size: 512
+display_visibility_threshold: 0.5

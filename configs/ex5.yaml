@@ -1,4 +1,4 @@
-# Settings consumed directly by src/ex5.py. Paths are relative to this file.
+# src/ex5.pyが直接読み込む設定。相対パスはこのファイルを基準に解決する。
 input_path: ../data/GaHu-Video/S001.avi
 model_path: ../data/models/pose_landmarker_lite.task
 estimator: mediapipe

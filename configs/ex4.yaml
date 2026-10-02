@@ -1,4 +1,4 @@
-# Settings consumed directly by src/ex4.py. Paths are relative to this file.
+# src/ex4.pyが直接読み込む設定。相対パスはこのファイルを基準に解決する。
 input_videos:
   s1_seq1_cam0: ../data/mpi_inf_3dhp/S1/Seq1/imageSequence/video_0.avi
   s1_seq2_cam0: ../data/mpi_inf_3dhp/S1/Seq2/imageSequence/video_0.avi

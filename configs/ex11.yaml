@@ -1,8 +1,8 @@
-# Difference analysis using a common subspace estimated from clean C3D data.
+# ノイズを加えていないC3Dから推定した共通部分空間で差分解析を行う。
 c3d_path: ../data/07_01.c3d
 input_dir: ../out/ex6
-npz_pattern: "*.npz"
+npz_pattern: "歩行動画*/*.npz"
 output_dir: ../out/ex11
-dimension: [4, 5]
-frame_interval: 2
+dimension: [4, 5, 6]
+frame_interval: [2, 3]
 contribution_threshold: 0.999

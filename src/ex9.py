@@ -23,7 +23,7 @@ from utils.projected_display import plot_projected_coordinates  # noqa: E402
 
 DEFAULT_CONFIG = {
     "input_dir": Path("out/ex6"),
-    "npz_pattern": "*.npz",
+    "npz_pattern": "*/*.npz",
     "output_dir": Path("out/ex9"),
     "dimension": 5,
     "frame_index": 60,

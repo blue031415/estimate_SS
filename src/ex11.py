@@ -32,7 +32,7 @@ from utils.display import display_motion_score_contribution, display_motion_some
 DEFAULT_CONFIG = {
     "c3d_path": Path("data/07_01.c3d"),
     "input_dir": Path("out/ex6"),
-    "npz_pattern": "*.npz",
+    "npz_pattern": "*/*.npz",
     "output_dir": Path("out/ex11"),
     "dimension": 5,
     "frame_interval": 5,
@@ -133,36 +133,44 @@ def main(config_path=None):
         valid = np.isfinite(world_landmarks).all(axis=(1, 2))
         pose_joints = extract_pose_common_joints(world_landmarks[valid], landmark_names)
         pose_joints = upright_pose_coordinates(pose_joints)
-        if len(pose_joints) <= 2 * config["frame_interval"]:
-            raise ValueError(f"Not enough valid frames in {npz_path}")
-
-        # 3. Analyze the original video shape subspaces without dimensional reduction.
         pose_subspaces = build_shape_subspaces(pose_joints)
-        origin_output_dir = output_dir / "origin" / f"fi{config['frame_interval']}"
-        origin_output_dir.mkdir(parents=True, exist_ok=True)
-        _analyze_video(
-            pose_joints,
-            pose_subspaces,
-            origin_output_dir,
-            npz_path.stem,
-            config,
-            f"origin_fi{config['frame_interval']}",
-            "origin",
-        )
+        video_output_dir = output_dir / npz_path.stem
+        frame_intervals = config["frame_interval"]
+        if isinstance(frame_intervals, int):
+            frame_intervals = [frame_intervals]
+        for frame_interval in frame_intervals:
+            if len(pose_joints) <= 2 * frame_interval:
+                raise ValueError(f"Not enough valid frames in {npz_path}")
+            interval_config = dict(config)
+            interval_config["frame_interval"] = frame_interval
+            interval_output_dir = video_output_dir / f"fi{frame_interval}"
 
-        # 4. Project video shape subspaces into the clean-C3D common subspace.
-        for dimension in dimensions:
-            c3d_common_subspace = eigen_vectors[:, indices[:dimension]]
-            projected_subspaces = project_to_common_subspace(pose_subspaces, c3d_common_subspace)
-
-            # 5. Analyze the projected subspaces and write distinct C3D-tagged outputs.
-            print(f"[{npz_path.stem}] analyzing {len(pose_joints)} valid frames, D={dimension}")
-            condition_output_dir = output_dir / "c3d" / f"d{dimension}" / f"fi{config['frame_interval']}"
-            condition_output_dir.mkdir(parents=True, exist_ok=True)
+            # 3. Analyze original video subspaces without dimensional reduction.
+            origin_output_dir = interval_output_dir / "origin"
+            origin_output_dir.mkdir(parents=True, exist_ok=True)
             _analyze_video(
-                pose_joints, projected_subspaces, condition_output_dir, npz_path.stem, config,
-                f"c3d_d{dimension}_fi{config['frame_interval']}", f"C3D, D={dimension}",
+                pose_joints, pose_subspaces, origin_output_dir, npz_path.stem,
+                interval_config, "origin", "origin",
             )
+
+            # 4. Project video shape subspaces into each clean-C3D common subspace.
+            for dimension in dimensions:
+                c3d_common_subspace = eigen_vectors[:, indices[:dimension]]
+                projected_subspaces = project_to_common_subspace(
+                    pose_subspaces, c3d_common_subspace
+                )
+
+                # 5. Analyze projected subspaces in the interval/dimension directory.
+                print(
+                    f"[{npz_path.stem}] analyzing {len(pose_joints)} valid frames, "
+                    f"frame interval={frame_interval}, D={dimension}"
+                )
+                condition_output_dir = interval_output_dir / f"d{dimension}"
+                condition_output_dir.mkdir(parents=True, exist_ok=True)
+                _analyze_video(
+                    pose_joints, projected_subspaces, condition_output_dir,
+                    npz_path.stem, interval_config, "c3d", f"C3D, D={dimension}",
+                )
 
 
 if __name__ == "__main__":

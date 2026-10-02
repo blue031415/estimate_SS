@@ -23,9 +23,10 @@ class Ex11FlowTest(unittest.TestCase):
     ):
         input_dir = Path("out/test_ex11_input")
         output_dir = Path("out/test_ex11_output")
-        input_dir.mkdir(parents=True, exist_ok=True)
+        video_input_dir = input_dir / "motion"
+        video_input_dir.mkdir(parents=True, exist_ok=True)
         np.savez_compressed(
-            input_dir / "motion.npz",
+            video_input_dir / "motion.npz",
             world_landmarks=np.ones((12, 33, 3)),
             landmark_names=np.asarray([f"joint_{index}" for index in range(33)]),
         )
@@ -41,22 +42,36 @@ class Ex11FlowTest(unittest.TestCase):
         select_indices.return_value = np.arange(6), None, np.linspace(0.2, 1.0, 12)
         project_subspaces.return_value = projected
         config = dict(ex11.DEFAULT_CONFIG)
-        config.update({"input_dir": input_dir, "output_dir": output_dir})
+        config.update(
+            {
+                "input_dir": input_dir,
+                "output_dir": output_dir,
+                "dimension": [4, 5, 6],
+                "frame_interval": [2, 3],
+            }
+        )
 
         with patch("ex11.load_experiment_config", return_value=config):
             ex11.main("ignored.yaml")
 
         read_c3d.assert_called_once_with(str(config["c3d_path"]), return_labels=True)
-        project_subspaces.assert_called_once()
+        self.assertEqual(project_subspaces.call_count, 6)
         self.assertIs(project_subspaces.call_args.args[0], pose_subspaces)
-        np.testing.assert_array_equal(project_subspaces.call_args.args[1], np.eye(12)[:, :5])
-        self.assertEqual(analyze.call_count, 2)
+        np.testing.assert_array_equal(project_subspaces.call_args.args[1], np.eye(12)[:, :6])
+        self.assertEqual(analyze.call_count, 8)
         self.assertIs(analyze.call_args_list[0].args[1], pose_subspaces)
-        self.assertEqual(analyze.call_args_list[0].args[5], "origin_fi5")
-        self.assertEqual(analyze.call_args_list[0].args[2], output_dir / "origin" / "fi5")
+        self.assertEqual(analyze.call_args_list[0].args[5], "origin")
+        self.assertEqual(
+            analyze.call_args_list[0].args[2], output_dir / "motion" / "fi2" / "origin"
+        )
         self.assertIs(analyze.call_args_list[1].args[1], projected)
-        self.assertEqual(analyze.call_args_list[1].args[5], "c3d_d5_fi5")
-        self.assertEqual(analyze.call_args_list[1].args[2], output_dir / "c3d" / "d5" / "fi5")
+        self.assertEqual(analyze.call_args_list[1].args[5], "c3d")
+        self.assertEqual(
+            analyze.call_args_list[1].args[2], output_dir / "motion" / "fi2" / "d4"
+        )
+        self.assertEqual(
+            analyze.call_args_list[4].args[2], output_dir / "motion" / "fi3" / "origin"
+        )
 
     @patch("ex11.display_motion_some_score")
     @patch("ex11.display_motion_score_contribution")
@@ -81,6 +96,10 @@ class Ex11FlowTest(unittest.TestCase):
         geodestic.assert_called_once_with(subspaces, 5)
         self.assertEqual(display_contribution.call_count, 4)
         self.assertIn("frame interval=5", display_contribution.call_args_list[0].kwargs["title"])
+        self.assertEqual(
+            Path(display_contribution.call_args_list[0].args[4]),
+            Path("out/ex11/motion_first_origin.gif"),
+        )
         display_some.assert_called_once()
 
 

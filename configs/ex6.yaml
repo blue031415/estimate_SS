@@ -1,6 +1,6 @@
-# Settings consumed directly by src/ex6.py. Paths are relative to this file.
+# src/ex6.pyが直接読み込む設定。相対パスはこのファイルを基準に解決する。
 input_dir: ../data/self_videos
-video_pattern: "*.mp4"
+video_pattern: "歩行動画*.mp4"
 model_path: ../data/models/pose_landmarker_lite.task
 estimator: mediapipe
 mmpose_pose3d_model: human3d
@@ -17,8 +17,9 @@ min_detection_confidence: 0.5
 min_presence_confidence: 0.5
 min_tracking_confidence: 0.5
 display_visibility_threshold: 0.5
-first_dimension: 6
-second_dimension: 6
-geodestic_dimension: 6
-frame_interval: 3
+rotate_pose_90_degrees: false
+first_dimension: [4, 5, 6]
+second_dimension: [4, 5, 6]
+geodestic_dimension: [4, 5, 6]
+frame_interval: [2, 3]
 contribution_threshold: 0.999

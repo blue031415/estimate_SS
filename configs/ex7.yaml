@@ -1,5 +1,5 @@
-# Settings consumed directly by src/ex7.py. Paths are relative to this file.
+# src/ex7.pyが直接読み込む設定。相対パスはこのファイルを基準に解決する。
 input_dir: ../out/ex6
-npz_pattern: "*.npz"
+npz_pattern: "*/*.npz"
 output_dir: ../out/ex7
 contribution_threshold: 0.999
